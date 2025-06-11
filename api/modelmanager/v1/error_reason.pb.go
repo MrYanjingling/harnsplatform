@@ -25,6 +25,7 @@ type ErrorReason int32
 const (
 	ErrorReason_GREETER_UNSPECIFIED ErrorReason = 0
 	ErrorReason_USER_NOT_FOUND      ErrorReason = 1
+	ErrorReason_RESOURCE_MISMATCH   ErrorReason = 2
 )
 
 // Enum value maps for ErrorReason.
@@ -32,10 +33,12 @@ var (
 	ErrorReason_name = map[int32]string{
 		0: "GREETER_UNSPECIFIED",
 		1: "USER_NOT_FOUND",
+		2: "RESOURCE_MISMATCH",
 	}
 	ErrorReason_value = map[string]int32{
 		"GREETER_UNSPECIFIED": 0,
 		"USER_NOT_FOUND":      1,
+		"RESOURCE_MISMATCH":   2,
 	}
 )
 

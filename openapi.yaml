@@ -98,9 +98,15 @@ components:
                     type: string
                 version:
                     type: string
-                createdBy:
+                tenant:
                     type: string
-                updatedBy:
+                createdById:
+                    type: string
+                updatedById:
+                    type: string
+                createdByName:
+                    type: string
+                updatedByName:
                     type: string
                 createdTime:
                     type: string

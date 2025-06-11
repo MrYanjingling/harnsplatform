@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
+	"github.com/go-kratos/kratos/v2"
 	"github.com/spf13/viper"
 	"os"
 
 	"harnsplatform/internal/conf"
 
-	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -58,25 +58,26 @@ func main() {
 		"span.id", tracing.SpanID(),
 	)
 
+	log := log.NewHelper(logger)
 	var bc conf.Bootstrap
 	if flagconf != "" {
 		viper.SetConfigFile(flagconf)
 		if err := viper.ReadInConfig(); err != nil {
-			panic(err)
+			log.Fatalf("failed to read config yaml. err:{%s}", err)
 		}
 		if err := viper.Unmarshal(&bc); err != nil {
-			panic(err)
+			log.Fatalf("failed to unmarshal config yaml. err:{%s}", err)
 		}
 	}
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to wire app. err:{%s}", err)
 	}
 	defer cleanup()
 
 	// start and wait for stop signal
 	if err := app.Run(); err != nil {
-		panic(err)
+		log.Fatalf("failed to run app. err:{%s}", err)
 	}
 }

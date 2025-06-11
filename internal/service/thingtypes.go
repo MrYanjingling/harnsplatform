@@ -3,8 +3,13 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/oklog/ulid/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	pb "harnsplatform/api/modelmanager/v1"
 	"harnsplatform/internal/biz"
+	randutil "harnsplatform/internal/utils"
+	"strconv"
+	"time"
 )
 
 type ThingTypesService struct {
@@ -23,6 +28,7 @@ func NewThingTypesService(ttu *biz.ThingTypesUsecase, logger log.Logger) *ThingT
 
 // CreateThingTypes Validate in this
 func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.CreateThingTypesRequest) (*pb.CreateThingTypesReply, error) {
+	id := ulid.MustNewDefault(time.Now()).String()
 
 	tt := &biz.ThingTypes{
 		Name:            req.GetName(),
@@ -31,10 +37,10 @@ func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.Create
 		Characteristics: map[string]interface{}{},
 		PropertySets:    map[string]interface{}{},
 		Meta: biz.Meta{
-			Id: "11121",
+			Id:      id,
+			Version: strconv.FormatUint(randutil.Uint64n(), 10),
 		},
 	}
-
 	for key, characteristic := range req.GetCharacteristics() {
 		tt.Characteristics[key] = &biz.Characteristics{
 			Name:         characteristic.GetName(),
@@ -44,7 +50,6 @@ func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.Create
 			DefaultValue: characteristic.GetDefaultValue(),
 		}
 	}
-
 	for key, ps := range req.GetPropertySets() {
 		tt.PropertySets[key] = make(map[string]*biz.Property, 0)
 		for k, property := range ps.GetProperties() {
@@ -60,9 +65,29 @@ func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.Create
 		}
 	}
 
-	s.ttu.CreateThingTypes(ctx, tt)
+	thingTypes, err := s.ttu.CreateThingTypes(ctx, tt)
+	if err != nil {
+		return nil, err
+	}
 
-	return &pb.CreateThingTypesReply{}, nil
+	return &pb.CreateThingTypesReply{
+		Name:            thingTypes.Name,
+		ParentTypeId:    thingTypes.ParentTypeId,
+		Description:     thingTypes.Description,
+		Characteristics: req.Characteristics,
+		PropertySets:    req.PropertySets,
+		Meta: &pb.Meta{
+			Id:            thingTypes.Meta.Id,
+			Version:       thingTypes.Meta.Version,
+			Tenant:        thingTypes.Meta.Tenant,
+			CreatedById:   thingTypes.Meta.CreatedById,
+			UpdatedById:   thingTypes.Meta.UpdatedById,
+			CreatedByName: thingTypes.Meta.CreatedByName,
+			UpdatedByName: thingTypes.Meta.UpdatedByName,
+			CreatedTime:   timestamppb.New(thingTypes.Meta.CreatedTime),
+			UpdatedTime:   timestamppb.New(thingTypes.Meta.UpdatedTime),
+		},
+	}, nil
 }
 func (s *ThingTypesService) UpdateThingTypes(ctx context.Context, req *pb.UpdateThingTypesRequest) (*pb.UpdateThingTypesReply, error) {
 	return &pb.UpdateThingTypesReply{}, nil

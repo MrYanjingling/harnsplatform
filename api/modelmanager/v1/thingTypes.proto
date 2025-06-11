@@ -18,6 +18,7 @@ service ThingTypes {
   }
   rpc UpdateThingTypes (UpdateThingTypesRequest) returns (UpdateThingTypesReply);
   rpc DeleteThingTypes (DeleteThingTypesRequest) returns (DeleteThingTypesReply);
+  rpc DeleteThingTypesBatch (DeleteThingTypesBatchRequest) returns (DeleteThingTypesBatchReply);
   rpc GetThingTypes (GetThingTypesRequest) returns (GetThingTypesReply);
   rpc ListThingTypes (ListThingTypesRequest) returns (ListThingTypesReply);
 }
@@ -39,14 +40,57 @@ message CreateThingTypesReply {
   Meta meta = 7;
 }
 
-message UpdateThingTypesRequest {}
-message UpdateThingTypesReply {}
+message UpdateThingTypesRequest {
+  string id = 1;
+  string version = 2;
+  string name = 3;
+  string parent_type_id = 4;
+  string description = 5;
+  map<string, Characteristic> characteristics = 6;
+  map<string, PropertySet> property_sets = 7;
+}
+message UpdateThingTypesReply {
+  string name = 1;
+  string tenant = 2;
+  string parent_type_id = 3;
+  string description = 4;
+  map<string, Characteristic> characteristics = 5;
+  map<string, PropertySet> property_sets = 6;
+  Meta meta = 7;
+}
 
-message DeleteThingTypesRequest {}
-message DeleteThingTypesReply {}
+message DeleteThingTypesRequest {
+  string id = 1;
+  string version = 2;
+}
+message DeleteThingTypesReply {
+  string name = 1;
+  string tenant = 2;
+  string parent_type_id = 3;
+  string description = 4;
+  map<string, Characteristic> characteristics = 5;
+  map<string, PropertySet> property_sets = 6;
+  Meta meta = 7;
+}
 
-message GetThingTypesRequest {}
-message GetThingTypesReply {}
+
+message DeleteThingTypesBatchRequest {
+  repeated string  ids = 1;
+}
+message DeleteThingTypesBatchReply {}
+
+message GetThingTypesRequest {
+  string id = 1;
+}
+message GetThingTypesReply {
+  string name = 1;
+  string tenant = 2;
+  string parent_type_id = 3;
+  string description = 4;
+  map<string, Characteristic> characteristics = 5;
+  map<string, PropertySet> property_sets = 6;
+  Meta meta = 7;
+}
 
 message ListThingTypesRequest {}
 message ListThingTypesReply {}

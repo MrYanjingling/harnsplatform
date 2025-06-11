@@ -14,8 +14,21 @@ type Meta struct {
 	UpdatedTime   time.Time `gorm:"column:updated_time;autoUpdateTime"`
 	CreatedByName string    `gorm:"column:created_by_name;type:varchar(32)"`
 	CreatedById   string    `gorm:"column:created_by_id;type:varchar(32)"`
-	updatedByName string    `gorm:"column:updated_by_name;type:varchar(32)"`
-	updatedById   string    `gorm:"column:updated_by_id;type:varchar(32)"`
+	UpdatedByName string    `gorm:"column:updated_by_name;type:varchar(32)"`
+	UpdatedById   string    `gorm:"column:updated_by_id;type:varchar(32)"`
+}
+
+func (m *Meta) GetVersion() string {
+	return m.Version
+}
+
+func (m *Meta) SetVersion(version string) {
+	m.Version = version
+}
+
+type OptimisticLock interface {
+	GetVersion() string
+	SetVersion(version string)
 }
 
 func GetCurrentUser(db *gorm.DB) *auth.User {

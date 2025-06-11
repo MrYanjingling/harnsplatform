@@ -6,11 +6,13 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 	v1 "harnsplatform/api/modelmanager/v1"
+	"math/rand"
+	"strconv"
 )
 
 var (
 	// ErrUserNotFound is user not found.
-	ErrStudentNotFound = errors.NotFound(v1.ErrorReason_USER_NOT_FOUND.String(), "user not found")
+	ErrStudentNotFound = errors.NotFound(v1.ErrorReason_RESOURCE_MISMATCH.String(), "thingTypes resource mismatch")
 )
 
 type ThingTypes struct {
@@ -26,9 +28,9 @@ func (t *ThingTypes) BeforeSave(db *gorm.DB) error {
 	user := GetCurrentUser(db)
 	if user.Name != "" {
 		t.Meta.CreatedByName = user.Name
-		t.Meta.updatedByName = user.Name
+		t.Meta.UpdatedByName = user.Name
 		t.Meta.CreatedById = user.Id
-		t.Meta.updatedById = user.Id
+		t.Meta.UpdatedById = user.Id
 		t.Meta.Tenant = user.Tenant
 	}
 	return nil
@@ -37,9 +39,39 @@ func (t *ThingTypes) BeforeSave(db *gorm.DB) error {
 func (t *ThingTypes) BeforeUpdate(db *gorm.DB) error {
 	user := GetCurrentUser(db)
 	if user.Name != "" {
-		t.Meta.updatedByName = user.Name
-		t.Meta.updatedById = user.Id
+		t.Meta.UpdatedByName = user.Name
+		t.Meta.UpdatedById = user.Id
 	}
+
+	// 从上下文中获取是否已经查询过最新版本
+	if latest, ok := db.Get("tt_l_v"); ok {
+		if latestThingTypes, ok := latest.(ThingTypes); ok {
+			if t.Meta.GetVersion() != latestThingTypes.Meta.GetVersion() {
+				return GenerateResourceMismatchError("thingTypes")
+			}
+
+			// set version
+			ver, _ := strconv.ParseUint(t.Meta.GetVersion(), 10, 64)
+			t.Meta.SetVersion(strconv.FormatUint(ver+uint64(rand.Intn(100)), 10))
+			return nil
+		}
+	}
+
+	// 未查询过则执行查询
+	var latest ThingTypes
+	if err := db.First(&latest, t.Meta.Id).Error; err != nil {
+		return err
+	}
+	// 保存到上下文，避免重复查询
+	db.Set("tt_l_v", latest)
+
+	if t.Meta.GetVersion() != latest.Meta.GetVersion() {
+		return errors.New(421, "数据已被修改，乐观锁检测失败", "")
+	}
+
+	// set version
+	ver, _ := strconv.ParseUint(t.Meta.GetVersion(), 10, 64)
+	t.Meta.SetVersion(strconv.FormatUint(ver+uint64(rand.Intn(100)), 10))
 	return nil
 }
 
@@ -65,7 +97,6 @@ type Property struct {
 	Max        string `json:"max,omitempty"`
 }
 
-// GreeterRepo is a Greater repo.
 type ThingTypesRepo interface {
 	Save(context.Context, *ThingTypes) (*ThingTypes, error)
 	Update(context.Context, *ThingTypes) (*ThingTypes, error)
@@ -73,18 +104,15 @@ type ThingTypesRepo interface {
 	ListAll(context.Context) ([]*ThingTypes, error)
 }
 
-// GreeterUsecase is a Greeter usecase.
 type ThingTypesUsecase struct {
 	repo ThingTypesRepo
 	log  *log.Helper
 }
 
-// NewGreeterUsecase new a Greeter usecase.
 func NewThingTypesUsecase(repo ThingTypesRepo, logger log.Logger) *ThingTypesUsecase {
 	return &ThingTypesUsecase{repo: repo, log: log.NewHelper(logger)}
 }
 
-// CreateGreeter creates a Greeter, and returns the new Greeter.
 func (ttu *ThingTypesUsecase) CreateThingTypes(ctx context.Context, tt *ThingTypes) (*ThingTypes, error) {
 	ttu.log.WithContext(ctx).Debug("CreateThingTypes: %v", tt)
 	return ttu.repo.Save(ctx, tt)

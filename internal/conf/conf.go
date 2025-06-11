@@ -24,18 +24,18 @@ func (x *Bootstrap) GetData() *Data {
 }
 
 type Server struct {
-	Http *Server_HTTP `mapstructure:"http,omitempty"`
-	Grpc *Server_GRPC `mapstructure:"grpc,omitempty"`
+	Http *ServerHTTP `mapstructure:"http,omitempty"`
+	Grpc *ServerGRPC `mapstructure:"grpc,omitempty"`
 }
 
-func (x *Server) GetHttp() *Server_HTTP {
+func (x *Server) GetHttp() *ServerHTTP {
 	if x != nil {
 		return x.Http
 	}
 	return nil
 }
 
-func (x *Server) GetGrpc() *Server_GRPC {
+func (x *Server) GetGrpc() *ServerGRPC {
 	if x != nil {
 		return x.Grpc
 	}
@@ -43,126 +43,126 @@ func (x *Server) GetGrpc() *Server_GRPC {
 }
 
 type Data struct {
-	Database *Data_Database `mapstructure:"database,omitempty"`
-	Redis    *Data_Redis    `mapstructure:"redis,omitempty"`
+	Database *DataDatabase `mapstructure:"database,omitempty"`
+	Redis    *DataRedis    `mapstructure:"redis,omitempty"`
 }
 
-func (x *Data) GetDatabase() *Data_Database {
+func (x *Data) GetDatabase() *DataDatabase {
 	if x != nil {
 		return x.Database
 	}
 	return nil
 }
 
-func (x *Data) GetRedis() *Data_Redis {
+func (x *Data) GetRedis() *DataRedis {
 	if x != nil {
 		return x.Redis
 	}
 	return nil
 }
 
-type Server_HTTP struct {
+type ServerHTTP struct {
 	Network string        `mapstructure:"network,omitempty"`
 	Addr    string        `mapstructure:"addr,omitempty"`
 	Timeout time.Duration `mapstructure:"timeout,omitempty"`
 }
 
-func (x *Server_HTTP) GetNetwork() string {
+func (x *ServerHTTP) GetNetwork() string {
 	if x != nil {
 		return x.Network
 	}
 	return ""
 }
 
-func (x *Server_HTTP) GetAddr() string {
+func (x *ServerHTTP) GetAddr() string {
 	if x != nil {
 		return x.Addr
 	}
 	return ""
 }
 
-func (x *Server_HTTP) GetTimeout() time.Duration {
+func (x *ServerHTTP) GetTimeout() time.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return time.Duration(1)
 }
 
-type Server_GRPC struct {
+type ServerGRPC struct {
 	Network string        `mapstructure:"network,omitempty"`
 	Addr    string        `mapstructure:"addr,omitempty"`
 	Timeout time.Duration `mapstructure:"timeout,omitempty"`
 }
 
-func (x *Server_GRPC) GetNetwork() string {
+func (x *ServerGRPC) GetNetwork() string {
 	if x != nil {
 		return x.Network
 	}
 	return ""
 }
 
-func (x *Server_GRPC) GetAddr() string {
+func (x *ServerGRPC) GetAddr() string {
 	if x != nil {
 		return x.Addr
 	}
 	return ""
 }
 
-func (x *Server_GRPC) GetTimeout() time.Duration {
+func (x *ServerGRPC) GetTimeout() time.Duration {
 	if x != nil {
 		return x.Timeout
 	}
 	return time.Duration(1)
 }
 
-type Data_Database struct {
+type DataDatabase struct {
 	Driver string `mapstructure:"driver,omitempty"`
 	Source string `mapstructure:"source,omitempty"`
 }
 
-func (x *Data_Database) GetDriver() string {
+func (x *DataDatabase) GetDriver() string {
 	if x != nil {
 		return x.Driver
 	}
 	return ""
 }
 
-func (x *Data_Database) GetSource() string {
+func (x *DataDatabase) GetSource() string {
 	if x != nil {
 		return x.Source
 	}
 	return ""
 }
 
-type Data_Redis struct {
+type DataRedis struct {
 	Network      string        `mapstructure:"network,omitempty"`
 	Addr         string        `mapstructure:"addr,omitempty"`
 	ReadTimeout  time.Duration `mapstructure:"read_timeout,omitempty"`
 	WriteTimeout time.Duration `mapstructure:"write_timeout,omitempty"`
 }
 
-func (x *Data_Redis) GetNetwork() string {
+func (x *DataRedis) GetNetwork() string {
 	if x != nil {
 		return x.Network
 	}
 	return ""
 }
 
-func (x *Data_Redis) GetAddr() string {
+func (x *DataRedis) GetAddr() string {
 	if x != nil {
 		return x.Addr
 	}
 	return ""
 }
 
-func (x *Data_Redis) GetReadTimeout() time.Duration {
+func (x *DataRedis) GetReadTimeout() time.Duration {
 	if x != nil {
 		return x.ReadTimeout
 	}
 	return time.Duration(1)
 }
 
-func (x *Data_Redis) GetWriteTimeout() time.Duration {
+func (x *DataRedis) GetWriteTimeout() time.Duration {
 	if x != nil {
 		return x.WriteTimeout
 	}
