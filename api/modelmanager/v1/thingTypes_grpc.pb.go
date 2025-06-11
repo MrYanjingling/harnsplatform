@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ThingTypes_CreateThingTypes_FullMethodName = "/api.modelmanager.v1.ThingTypes/CreateThingTypes"
-	ThingTypes_UpdateThingTypes_FullMethodName = "/api.modelmanager.v1.ThingTypes/UpdateThingTypes"
-	ThingTypes_DeleteThingTypes_FullMethodName = "/api.modelmanager.v1.ThingTypes/DeleteThingTypes"
-	ThingTypes_GetThingTypes_FullMethodName    = "/api.modelmanager.v1.ThingTypes/GetThingTypes"
-	ThingTypes_ListThingTypes_FullMethodName   = "/api.modelmanager.v1.ThingTypes/ListThingTypes"
+	ThingTypes_CreateThingTypes_FullMethodName      = "/api.modelmanager.v1.ThingTypes/CreateThingTypes"
+	ThingTypes_UpdateThingTypes_FullMethodName      = "/api.modelmanager.v1.ThingTypes/UpdateThingTypes"
+	ThingTypes_DeleteThingTypes_FullMethodName      = "/api.modelmanager.v1.ThingTypes/DeleteThingTypes"
+	ThingTypes_DeleteThingTypesBatch_FullMethodName = "/api.modelmanager.v1.ThingTypes/DeleteThingTypesBatch"
+	ThingTypes_GetThingTypes_FullMethodName         = "/api.modelmanager.v1.ThingTypes/GetThingTypes"
+	ThingTypes_ListThingTypes_FullMethodName        = "/api.modelmanager.v1.ThingTypes/ListThingTypes"
 )
 
 // ThingTypesClient is the client API for ThingTypes service.
@@ -33,6 +34,7 @@ type ThingTypesClient interface {
 	CreateThingTypes(ctx context.Context, in *CreateThingTypesRequest, opts ...grpc.CallOption) (*CreateThingTypesReply, error)
 	UpdateThingTypes(ctx context.Context, in *UpdateThingTypesRequest, opts ...grpc.CallOption) (*UpdateThingTypesReply, error)
 	DeleteThingTypes(ctx context.Context, in *DeleteThingTypesRequest, opts ...grpc.CallOption) (*DeleteThingTypesReply, error)
+	DeleteThingTypesBatch(ctx context.Context, in *DeleteThingTypesBatchRequest, opts ...grpc.CallOption) (*DeleteThingTypesBatchReply, error)
 	GetThingTypes(ctx context.Context, in *GetThingTypesRequest, opts ...grpc.CallOption) (*GetThingTypesReply, error)
 	ListThingTypes(ctx context.Context, in *ListThingTypesRequest, opts ...grpc.CallOption) (*ListThingTypesReply, error)
 }
@@ -72,6 +74,15 @@ func (c *thingTypesClient) DeleteThingTypes(ctx context.Context, in *DeleteThing
 	return out, nil
 }
 
+func (c *thingTypesClient) DeleteThingTypesBatch(ctx context.Context, in *DeleteThingTypesBatchRequest, opts ...grpc.CallOption) (*DeleteThingTypesBatchReply, error) {
+	out := new(DeleteThingTypesBatchReply)
+	err := c.cc.Invoke(ctx, ThingTypes_DeleteThingTypesBatch_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *thingTypesClient) GetThingTypes(ctx context.Context, in *GetThingTypesRequest, opts ...grpc.CallOption) (*GetThingTypesReply, error) {
 	out := new(GetThingTypesReply)
 	err := c.cc.Invoke(ctx, ThingTypes_GetThingTypes_FullMethodName, in, out, opts...)
@@ -97,6 +108,7 @@ type ThingTypesServer interface {
 	CreateThingTypes(context.Context, *CreateThingTypesRequest) (*CreateThingTypesReply, error)
 	UpdateThingTypes(context.Context, *UpdateThingTypesRequest) (*UpdateThingTypesReply, error)
 	DeleteThingTypes(context.Context, *DeleteThingTypesRequest) (*DeleteThingTypesReply, error)
+	DeleteThingTypesBatch(context.Context, *DeleteThingTypesBatchRequest) (*DeleteThingTypesBatchReply, error)
 	GetThingTypes(context.Context, *GetThingTypesRequest) (*GetThingTypesReply, error)
 	ListThingTypes(context.Context, *ListThingTypesRequest) (*ListThingTypesReply, error)
 	mustEmbedUnimplementedThingTypesServer()
@@ -114,6 +126,9 @@ func (UnimplementedThingTypesServer) UpdateThingTypes(context.Context, *UpdateTh
 }
 func (UnimplementedThingTypesServer) DeleteThingTypes(context.Context, *DeleteThingTypesRequest) (*DeleteThingTypesReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteThingTypes not implemented")
+}
+func (UnimplementedThingTypesServer) DeleteThingTypesBatch(context.Context, *DeleteThingTypesBatchRequest) (*DeleteThingTypesBatchReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteThingTypesBatch not implemented")
 }
 func (UnimplementedThingTypesServer) GetThingTypes(context.Context, *GetThingTypesRequest) (*GetThingTypesReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetThingTypes not implemented")
@@ -188,6 +203,24 @@ func _ThingTypes_DeleteThingTypes_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ThingTypes_DeleteThingTypesBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteThingTypesBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ThingTypesServer).DeleteThingTypesBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ThingTypes_DeleteThingTypesBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ThingTypesServer).DeleteThingTypesBatch(ctx, req.(*DeleteThingTypesBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ThingTypes_GetThingTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetThingTypesRequest)
 	if err := dec(in); err != nil {
@@ -242,6 +275,10 @@ var ThingTypes_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteThingTypes",
 			Handler:    _ThingTypes_DeleteThingTypes_Handler,
+		},
+		{
+			MethodName: "DeleteThingTypesBatch",
+			Handler:    _ThingTypes_DeleteThingTypesBatch_Handler,
 		},
 		{
 			MethodName: "GetThingTypes",
