@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-kratos/kratos/v2/middleware"
+	"github.com/go-kratos/kratos/v2/middleware/selector"
 	v1 "harnsplatform/api/modelmanager/v1"
 	"harnsplatform/internal/auth"
 	"harnsplatform/internal/conf"
@@ -18,12 +18,12 @@ import (
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, thingTypes *service.ThingTypesService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, thingTypes *service.ThingTypesService, logger *log.Helper) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			record(),
-			idm(),
+			record(logger),
+			selector.Server(idm(logger)).Match(NewWhiteListMatcher()).Build(),
 		),
 	}
 	if c.Http.Network != "" {
@@ -34,14 +34,20 @@ func NewHTTPServer(c *conf.Server, thingTypes *service.ThingTypesService, logger
 	}
 	opts = append(opts, http.Timeout(c.Http.Timeout))
 	srv := http.NewServer(opts...)
+
+	// auth
+
 	v1.RegisterThingTypesHTTPServer(srv, thingTypes)
 	return srv
 }
 
-func idm() middleware.Middleware {
+func idm(logger *log.Helper) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			c := context.WithValue(ctx, "user", &auth.User{
+			hc, _ := ctx.(http.Context)
+			token := hc.Header().Get("Authorization")
+			logger.Infof("Authorization:[%s]", token)
+			c := context.WithValue(hc, "user", &auth.User{
 				Id:     "001",
 				Name:   "anonymous",
 				Tenant: "main",
@@ -51,7 +57,7 @@ func idm() middleware.Middleware {
 	}
 }
 
-func record() middleware.Middleware {
+func record(log *log.Helper) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			// Start timer
@@ -59,9 +65,20 @@ func record() middleware.Middleware {
 			defer func() {
 				// Stop timer
 				latency := time.Now().Sub(start).Seconds()
-				fmt.Printf("latency [%f]\n", latency)
+				log.Debugf("latency [%f]", latency)
 			}()
 			return handler(ctx, req)
 		}
+	}
+}
+
+func NewWhiteListMatcher() selector.MatchFunc {
+	whiteList := make(map[string]struct{})
+	whiteList["/login"] = struct{}{}
+	return func(ctx context.Context, operation string) bool {
+		if _, ok := whiteList[operation]; ok {
+			return false
+		}
+		return true
 	}
 }

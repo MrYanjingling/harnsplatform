@@ -10,6 +10,9 @@ import (
 	context "context"
 	http "github.com/go-kratos/kratos/v2/transport/http"
 	binding "github.com/go-kratos/kratos/v2/transport/http/binding"
+	"harnsplatform/internal/biz"
+	"harnsplatform/internal/common"
+	"harnsplatform/internal/errors"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,38 +25,145 @@ const _ = http.SupportPackageIsVersion1
 const OperationThingTypesCreateThingTypes = "/api.modelmanager.v1.ThingTypes/CreateThingTypes"
 
 type ThingTypesHTTPServer interface {
-	CreateThingTypes(context.Context, *CreateThingTypesRequest) (*CreateThingTypesReply, error)
+	CreateThingTypes(context.Context, *ThingTypes) (*biz.ThingTypes, error)
+	UpdateThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
+	DeleteThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
+	DeleteThingTypes(context.Context, *BatchIds) (*BatchIds, error)
+	GetThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
 }
 
 func RegisterThingTypesHTTPServer(s *http.Server, srv ThingTypesHTTPServer) {
 	r := s.Route("/")
-	r.POST("/model-manager/v1/thingTypes", _ThingTypes_CreateThingTypes0_HTTP_Handler(srv))
+	r.POST("/model-manager/v1/thingTypes", CreateThingTypes(srv))
+	r.PUT("/model-manager/v1/thingTypes/{id}", UpdateThingTypesById(srv))
+	r.GET("/model-manager/v1/thingTypes/{id}", GetThingTypesById(srv))
+	// r.GET("/model-manager/v1/thingTypes", CreateThingTypes(srv))
+	r.DELETE("/model-manager/v1/thingTypes/{id}", DeleteThingTypesById(srv))
+	r.POST("/model-manager/v1/deleteThingTypesBatch", DeleteThingTypes(srv))
 }
 
-func _ThingTypes_CreateThingTypes0_HTTP_Handler(srv ThingTypesHTTPServer) func(ctx http.Context) error {
+func CreateThingTypes(srv ThingTypesHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in CreateThingTypesRequest
+		var in ThingTypes
+		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CreateThingTypes(ctx, req.(*ThingTypes))
+		})
 		if err := ctx.Bind(&in); err != nil {
 			return err
 		}
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*biz.ThingTypes)
+		return ctx.Result(200, reply)
+	}
+}
+
+func UpdateThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		version := ctx.Header().Get(common.ETAG)
+		if len(version) == 0 {
+			return errors.GenerateResourcePreconditionRequiredError(common.THING_TYPES)
+		}
+
+		var in ThingTypes
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindVars(&in); err != nil {
+			return err
+		}
+		in.Version = version
+
 		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.CreateThingTypes(ctx, req.(*CreateThingTypesRequest))
+			return srv.UpdateThingTypesById(ctx, req.(*ThingTypes))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
 			return err
 		}
-		reply := out.(*CreateThingTypesReply)
+		reply := out.(*biz.ThingTypes)
+		return ctx.Result(200, reply)
+	}
+}
+
+func GetThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var meta biz.Meta
+		if err := ctx.BindVars(&meta); err != nil {
+			return err
+		}
+		in := ThingTypes{
+			Meta: &meta,
+		}
+		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetThingTypesById(ctx, req.(*ThingTypes))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*biz.ThingTypes)
+		return ctx.Result(200, reply)
+	}
+}
+
+func DeleteThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var meta biz.Meta
+		if err := ctx.BindVars(&meta); err != nil {
+			return err
+		}
+		version := ctx.Header().Get(common.ETAG)
+		if len(version) == 0 {
+			return errors.GenerateResourcePreconditionRequiredError(common.THING_TYPES)
+		}
+
+		meta.Version = version
+		in := ThingTypes{
+			Meta: &meta,
+		}
+		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.DeleteThingTypesById(ctx, req.(*ThingTypes))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*biz.ThingTypes)
+		return ctx.Result(200, reply)
+	}
+}
+
+func DeleteThingTypes(srv ThingTypesHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var bis BatchIds
+		if err := ctx.Bind(&bis); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.DeleteThingTypes(ctx, req.(*BatchIds))
+		})
+		out, err := h(ctx, &bis)
+		if err != nil {
+			return err
+		}
+		reply := out.(*BatchIds)
 		return ctx.Result(200, reply)
 	}
 }
 
 type ThingTypesHTTPClient interface {
-	CreateThingTypes(ctx context.Context, req *CreateThingTypesRequest, opts ...http.CallOption) (rsp *CreateThingTypesReply, err error)
+	CreateThingTypes(ctx context.Context, req *ThingTypes, opts ...http.CallOption) (rsp *biz.ThingTypes, err error)
 }
 
 type ThingTypesHTTPClientImpl struct {
@@ -64,8 +174,8 @@ func NewThingTypesHTTPClient(client *http.Client) ThingTypesHTTPClient {
 	return &ThingTypesHTTPClientImpl{client}
 }
 
-func (c *ThingTypesHTTPClientImpl) CreateThingTypes(ctx context.Context, in *CreateThingTypesRequest, opts ...http.CallOption) (*CreateThingTypesReply, error) {
-	var out CreateThingTypesReply
+func (c *ThingTypesHTTPClientImpl) CreateThingTypes(ctx context.Context, in *ThingTypes, opts ...http.CallOption) (*biz.ThingTypes, error) {
+	var out biz.ThingTypes
 	pattern := "/model-manager/v1/thingTypes"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationThingTypesCreateThingTypes))

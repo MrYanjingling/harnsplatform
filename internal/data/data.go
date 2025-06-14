@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // ProviderSet is data providers.
@@ -21,9 +22,8 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
+func NewData(c *conf.Data, log *log.Helper) (*Data, func(), error) {
 	data := &Data{}
-	log := log.NewHelper(logger)
 
 	driver := c.GetDatabase().GetDriver()
 	switch driver {

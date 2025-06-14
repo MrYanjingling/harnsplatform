@@ -8,11 +8,11 @@ server:
 data:
   database:
     driver: mysql
-    source: admin:admin@tcp(10.56.223.3:8597)/test?parseTime=True&loc=Local&charset=utf8mb4
+    source: root:root@tcp(192.168.159.131:3306)/test?parseTime=True&loc=Local&charset=utf8mb4
 #data:
 #  database:
 #    driver: sqlite
-#    source: harnsplatform.db
+#    source: "file::memory:?cache=shared"
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 1s

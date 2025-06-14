@@ -2,18 +2,19 @@ package biz
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
-	v1 "harnsplatform/api/modelmanager/v1"
+	"harnsplatform/internal/auth"
+	"harnsplatform/internal/common"
+	errors2 "harnsplatform/internal/errors"
 	"math/rand"
 	"strconv"
 )
 
-var (
-	// ErrUserNotFound is user not found.
-	ErrStudentNotFound = errors.NotFound(v1.ErrorReason_RESOURCE_MISMATCH.String(), "thingTypes resource mismatch")
-)
+// var (
+// 	// ErrUserNotFound is user not found.
+// 	ErrStudentNotFound = errors.NotFound(v1.ErrorReason_RESOURCE_MISMATCH.String(), "thingTypes resource mismatch")
+// )
 
 type ThingTypes struct {
 	Name            string  `gorm:"column:name;type:varchar(64)"`
@@ -21,58 +22,7 @@ type ThingTypes struct {
 	Description     string  `gorm:"column:description;type:varchar(256)"`
 	Characteristics JSONMap `gorm:"column:characteristics;type:json"`
 	PropertySets    JSONMap `gorm:"column:property_sets;type:json"`
-	Meta            Meta    `gorm:"embedded"`
-}
-
-func (t *ThingTypes) BeforeSave(db *gorm.DB) error {
-	user := GetCurrentUser(db)
-	if user.Name != "" {
-		t.Meta.CreatedByName = user.Name
-		t.Meta.UpdatedByName = user.Name
-		t.Meta.CreatedById = user.Id
-		t.Meta.UpdatedById = user.Id
-		t.Meta.Tenant = user.Tenant
-	}
-	return nil
-}
-
-func (t *ThingTypes) BeforeUpdate(db *gorm.DB) error {
-	user := GetCurrentUser(db)
-	if user.Name != "" {
-		t.Meta.UpdatedByName = user.Name
-		t.Meta.UpdatedById = user.Id
-	}
-
-	// 从上下文中获取是否已经查询过最新版本
-	if latest, ok := db.Get("tt_l_v"); ok {
-		if latestThingTypes, ok := latest.(ThingTypes); ok {
-			if t.Meta.GetVersion() != latestThingTypes.Meta.GetVersion() {
-				return GenerateResourceMismatchError("thingTypes")
-			}
-
-			// set version
-			ver, _ := strconv.ParseUint(t.Meta.GetVersion(), 10, 64)
-			t.Meta.SetVersion(strconv.FormatUint(ver+uint64(rand.Intn(100)), 10))
-			return nil
-		}
-	}
-
-	// 未查询过则执行查询
-	var latest ThingTypes
-	if err := db.First(&latest, t.Meta.Id).Error; err != nil {
-		return err
-	}
-	// 保存到上下文，避免重复查询
-	db.Set("tt_l_v", latest)
-
-	if t.Meta.GetVersion() != latest.Meta.GetVersion() {
-		return errors.New(421, "数据已被修改，乐观锁检测失败", "")
-	}
-
-	// set version
-	ver, _ := strconv.ParseUint(t.Meta.GetVersion(), 10, 64)
-	t.Meta.SetVersion(strconv.FormatUint(ver+uint64(rand.Intn(100)), 10))
-	return nil
+	Meta            `gorm:"embedded"`
 }
 
 type Characteristics struct {
@@ -81,10 +31,6 @@ type Characteristics struct {
 	Length       string `json:"length,omitempty"`
 	DataType     string `json:"dataType,omitempty"`
 	DefaultValue string `json:"defaultValue,omitempty"`
-}
-
-type PropertySet struct {
-	properties map[string]*Property
 }
 
 type Property struct {
@@ -97,10 +43,87 @@ type Property struct {
 	Max        string `json:"max,omitempty"`
 }
 
+func (t *ThingTypes) BeforeSave(db *gorm.DB) error {
+	user := auth.GetCurrentUser(db)
+	if user.Name != "" {
+		t.Meta.CreatedByName = user.Name
+		t.Meta.UpdatedByName = user.Name
+		t.Meta.CreatedById = user.Id
+		t.Meta.UpdatedById = user.Id
+		t.Meta.Tenant = user.Tenant
+	}
+	return nil
+}
+
+func (t *ThingTypes) BeforeUpdate(db *gorm.DB) error {
+	if db.Statement.Context.Value("skipUpdate") == true {
+		return nil
+	}
+
+	user := auth.GetCurrentUser(db)
+	if user.Name != "" {
+		t.Meta.UpdatedByName = user.Name
+		t.Meta.UpdatedById = user.Id
+	}
+
+	ctx := db.Statement.Context
+	meta := ctx.Value(common.META)
+	if readyUpdate, ok := meta.(*Meta); ok {
+		if tt, ok := ctx.Value(common.THING_TYPES).(*ThingTypes); ok {
+			if readyUpdate.GetVersion() != tt.GetVersion() {
+				return errors2.GenerateResourceMismatchError(common.THING_TYPES)
+			}
+		}
+		// ver, _ := strconv.ParseUint(readyUpdate.GetVersion(), 10, 64)
+		// t.Version = strconv.FormatUint(ver+uint64(rand.Intn(100)), 10)
+		// result := db.Model(&ThingTypes{}).Where("id = ?", t.Id).Update("version", readyUpdate.GetVersion())
+	}
+	return nil
+}
+
+func (t *ThingTypes) AfterUpdate(db *gorm.DB) error {
+
+	if db.Statement.Context.Value("skipUpdate") == true {
+		return nil
+	}
+
+	ctx := db.Statement.Context
+	meta := ctx.Value(common.META)
+	if readyUpdate, ok := meta.(*Meta); ok {
+		// set version
+		ver, _ := strconv.ParseUint(readyUpdate.GetVersion(), 10, 64)
+		version := strconv.FormatUint(ver+uint64(rand.Intn(100)), 10)
+
+		c := context.WithValue(ctx, "skipUpdate", true)
+
+		result := db.WithContext(c).Model(&ThingTypes{}).Where("id = ?", t.Id).Update("version", version)
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+	return nil
+}
+
+func (t *ThingTypes) BeforeDelete(db *gorm.DB) error {
+	ctx := db.Statement.Context
+	meta := ctx.Value(common.META)
+	if readyDelete, ok := meta.(*Meta); ok {
+		if tt, ok := ctx.Value(common.THING_TYPES).(*ThingTypes); ok {
+			if readyDelete.GetVersion() != tt.GetVersion() {
+				return errors2.GenerateResourceMismatchError(common.THING_TYPES)
+			}
+		}
+		return nil
+	}
+	return nil
+}
+
 type ThingTypesRepo interface {
 	Save(context.Context, *ThingTypes) (*ThingTypes, error)
 	Update(context.Context, *ThingTypes) (*ThingTypes, error)
-	FindByID(context.Context, int64) (*ThingTypes, error)
+	FindByID(context.Context, string) (*ThingTypes, error)
+	DeleteByID(context.Context, string) (*ThingTypes, error)
+	DeleteBatch(context.Context, []string) error
 	ListAll(context.Context) ([]*ThingTypes, error)
 }
 
@@ -109,11 +132,52 @@ type ThingTypesUsecase struct {
 	log  *log.Helper
 }
 
-func NewThingTypesUsecase(repo ThingTypesRepo, logger log.Logger) *ThingTypesUsecase {
-	return &ThingTypesUsecase{repo: repo, log: log.NewHelper(logger)}
+func NewThingTypesUsecase(repo ThingTypesRepo, logger *log.Helper) *ThingTypesUsecase {
+	return &ThingTypesUsecase{repo: repo, log: logger}
 }
 
 func (ttu *ThingTypesUsecase) CreateThingTypes(ctx context.Context, tt *ThingTypes) (*ThingTypes, error) {
-	ttu.log.WithContext(ctx).Debug("CreateThingTypes: %v", tt)
 	return ttu.repo.Save(ctx, tt)
+}
+
+func (ttu *ThingTypesUsecase) GetThingTypesById(ctx context.Context, id string) (*ThingTypes, error) {
+	return ttu.repo.FindByID(ctx, id)
+}
+
+func (ttu *ThingTypesUsecase) DeleteThingTypesById(ctx context.Context, id string) (*ThingTypes, error) {
+	byID, err := ttu.repo.FindByID(ctx, id)
+	if err != nil {
+		// 404
+		return nil, err
+	}
+	ctx = context.WithValue(ctx, common.THING_TYPES, byID)
+	_, err = ttu.repo.DeleteByID(ctx, id)
+	if err != nil {
+		// 428
+		return nil, err
+	}
+	return byID, nil
+}
+
+func (ttu *ThingTypesUsecase) UpdateThingTypesById(ctx context.Context, tt *ThingTypes) (*ThingTypes, error) {
+	byID, err := ttu.repo.FindByID(ctx, tt.Id)
+	if err != nil {
+		// 404
+		return nil, err
+	}
+	ctx = context.WithValue(ctx, common.THING_TYPES, byID)
+	updateID, err := ttu.repo.Update(ctx, tt)
+	if err != nil {
+		// 428
+		return nil, err
+	}
+	return updateID, nil
+}
+
+func (ttu *ThingTypesUsecase) DeleteThingTypes(ctx context.Context, ids []string) error {
+	err := ttu.repo.DeleteBatch(ctx, ids)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -4,36 +4,36 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/oklog/ulid/v2"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	pb "harnsplatform/api/modelmanager/v1"
 	"harnsplatform/internal/biz"
+	"harnsplatform/internal/common"
 	randutil "harnsplatform/internal/utils"
 	"strconv"
 	"time"
 )
 
 type ThingTypesService struct {
-	pb.UnimplementedThingTypesServer
+	// pb.UnimplementedThingTypesServer
 
 	ttu *biz.ThingTypesUsecase
 	log *log.Helper
 }
 
-func NewThingTypesService(ttu *biz.ThingTypesUsecase, logger log.Logger) *ThingTypesService {
+func NewThingTypesService(ttu *biz.ThingTypesUsecase, logger *log.Helper) *ThingTypesService {
 	return &ThingTypesService{
 		ttu: ttu,
-		log: log.NewHelper(logger),
+		log: logger,
 	}
 }
 
 // CreateThingTypes Validate in this
-func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.CreateThingTypesRequest) (*pb.CreateThingTypesReply, error) {
+func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
 	id := ulid.MustNewDefault(time.Now()).String()
 
 	tt := &biz.ThingTypes{
-		Name:            req.GetName(),
-		ParentTypeId:    req.GetParentTypeId(),
-		Description:     req.GetDescription(),
+		Name:            req.Name,
+		ParentTypeId:    req.ParentTypeId,
+		Description:     req.Description,
 		Characteristics: map[string]interface{}{},
 		PropertySets:    map[string]interface{}{},
 		Meta: biz.Meta{
@@ -41,26 +41,26 @@ func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.Create
 			Version: strconv.FormatUint(randutil.Uint64n(), 10),
 		},
 	}
-	for key, characteristic := range req.GetCharacteristics() {
+	for key, characteristic := range req.Characteristics {
 		tt.Characteristics[key] = &biz.Characteristics{
-			Name:         characteristic.GetName(),
-			Unit:         characteristic.GetUnit(),
-			Length:       characteristic.GetLength(),
-			DataType:     characteristic.GetDataType(),
-			DefaultValue: characteristic.GetDefaultValue(),
+			Name:         characteristic.Name,
+			Unit:         characteristic.Unit,
+			Length:       characteristic.Length,
+			DataType:     characteristic.DataType,
+			DefaultValue: characteristic.DefaultValue,
 		}
 	}
-	for key, ps := range req.GetPropertySets() {
+	for key, ps := range req.PropertySets {
 		tt.PropertySets[key] = make(map[string]*biz.Property, 0)
-		for k, property := range ps.GetProperties() {
+		for k, property := range ps {
 			tt.PropertySets[key].(map[string]*biz.Property)[k] = &biz.Property{
-				Name:       property.GetName(),
-				Unit:       property.GetUnit(),
-				Value:      property.GetValue(),
-				DataType:   pb.DataType_name[int32(property.GetDataType())],
-				AccessMode: pb.AccessMode_name[int32(property.GetAccessMode())],
-				Min:        property.GetMin(),
-				Max:        property.GetMax(),
+				Name:       property.Name,
+				Unit:       property.Unit,
+				Value:      property.Value,
+				DataType:   property.DataType,
+				AccessMode: property.AccessMode,
+				Min:        property.Min,
+				Max:        property.Max,
 			}
 		}
 	}
@@ -70,34 +70,75 @@ func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.Create
 		return nil, err
 	}
 
-	return &pb.CreateThingTypesReply{
-		Name:            thingTypes.Name,
-		ParentTypeId:    thingTypes.ParentTypeId,
-		Description:     thingTypes.Description,
-		Characteristics: req.Characteristics,
-		PropertySets:    req.PropertySets,
-		Meta: &pb.Meta{
-			Id:            thingTypes.Meta.Id,
-			Version:       thingTypes.Meta.Version,
-			Tenant:        thingTypes.Meta.Tenant,
-			CreatedById:   thingTypes.Meta.CreatedById,
-			UpdatedById:   thingTypes.Meta.UpdatedById,
-			CreatedByName: thingTypes.Meta.CreatedByName,
-			UpdatedByName: thingTypes.Meta.UpdatedByName,
-			CreatedTime:   timestamppb.New(thingTypes.Meta.CreatedTime),
-			UpdatedTime:   timestamppb.New(thingTypes.Meta.UpdatedTime),
+	return thingTypes, nil
+}
+
+func (s *ThingTypesService) GetThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
+	id, err := s.ttu.GetThingTypesById(ctx, req.Meta.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return id, nil
+}
+
+func (s *ThingTypesService) UpdateThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
+	c := context.WithValue(ctx, common.META, req.Meta)
+
+	tt := &biz.ThingTypes{
+		Name:            req.Name,
+		ParentTypeId:    req.ParentTypeId,
+		Description:     req.Description,
+		Characteristics: map[string]interface{}{},
+		PropertySets:    map[string]interface{}{},
+		Meta: biz.Meta{
+			Id: req.Id,
 		},
-	}, nil
+	}
+	for key, characteristic := range req.Characteristics {
+		tt.Characteristics[key] = &biz.Characteristics{
+			Name:         characteristic.Name,
+			Unit:         characteristic.Unit,
+			Length:       characteristic.Length,
+			DataType:     characteristic.DataType,
+			DefaultValue: characteristic.DefaultValue,
+		}
+	}
+	for key, ps := range req.PropertySets {
+		tt.PropertySets[key] = make(map[string]*biz.Property, 0)
+		for k, property := range ps {
+			tt.PropertySets[key].(map[string]*biz.Property)[k] = &biz.Property{
+				Name:       property.Name,
+				Unit:       property.Unit,
+				Value:      property.Value,
+				DataType:   property.DataType,
+				AccessMode: property.AccessMode,
+				Min:        property.Min,
+				Max:        property.Max,
+			}
+		}
+	}
+
+	id, err := s.ttu.UpdateThingTypesById(c, tt)
+	if err != nil {
+		return nil, err
+	}
+	return id, nil
 }
-func (s *ThingTypesService) UpdateThingTypes(ctx context.Context, req *pb.UpdateThingTypesRequest) (*pb.UpdateThingTypesReply, error) {
-	return &pb.UpdateThingTypesReply{}, nil
+
+func (s *ThingTypesService) DeleteThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
+	c := context.WithValue(ctx, common.META, req.Meta)
+	id, err := s.ttu.DeleteThingTypesById(c, req.Meta.Id)
+	if err != nil {
+		return nil, err
+	}
+	return id, nil
 }
-func (s *ThingTypesService) DeleteThingTypes(ctx context.Context, req *pb.DeleteThingTypesRequest) (*pb.DeleteThingTypesReply, error) {
-	return &pb.DeleteThingTypesReply{}, nil
-}
-func (s *ThingTypesService) GetThingTypes(ctx context.Context, req *pb.GetThingTypesRequest) (*pb.GetThingTypesReply, error) {
-	return &pb.GetThingTypesReply{}, nil
-}
-func (s *ThingTypesService) ListThingTypes(ctx context.Context, req *pb.ListThingTypesRequest) (*pb.ListThingTypesReply, error) {
-	return &pb.ListThingTypesReply{}, nil
+
+func (s *ThingTypesService) DeleteThingTypes(ctx context.Context, req *pb.BatchIds) (*pb.BatchIds, error) {
+	err := s.ttu.DeleteThingTypes(ctx, req.Ids)
+	if err != nil {
+		return req, err
+	}
+	return req, nil
 }
