@@ -56,7 +56,7 @@ func (t *ThingTypes) BeforeSave(db *gorm.DB) error {
 }
 
 func (t *ThingTypes) BeforeUpdate(db *gorm.DB) error {
-	if db.Statement.Context.Value("skipUpdate") == true {
+	if db.Statement.Context.Value(common.SKIP_UPDATE) == true {
 		return nil
 	}
 
@@ -83,7 +83,7 @@ func (t *ThingTypes) BeforeUpdate(db *gorm.DB) error {
 
 func (t *ThingTypes) AfterUpdate(db *gorm.DB) error {
 
-	if db.Statement.Context.Value("skipUpdate") == true {
+	if db.Statement.Context.Value(common.SKIP_UPDATE) == true {
 		return nil
 	}
 
@@ -94,9 +94,9 @@ func (t *ThingTypes) AfterUpdate(db *gorm.DB) error {
 		ver, _ := strconv.ParseUint(readyUpdate.GetVersion(), 10, 64)
 		version := strconv.FormatUint(ver+uint64(rand.Intn(100)), 10)
 
-		c := context.WithValue(ctx, "skipUpdate", true)
+		c := context.WithValue(ctx, common.SKIP_UPDATE, true)
 
-		result := db.WithContext(c).Model(&ThingTypes{}).Where("id = ?", t.Id).Update("version", version)
+		result := db.WithContext(c).Model(&ThingTypes{}).Where("id = ?", t.Id).Update(common.VERSION, version)
 		if result.Error != nil {
 			return result.Error
 		}

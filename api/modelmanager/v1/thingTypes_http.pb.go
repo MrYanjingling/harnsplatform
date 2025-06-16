@@ -37,7 +37,6 @@ func RegisterThingTypesHTTPServer(s *http.Server, srv ThingTypesHTTPServer) {
 	r.POST("/model-manager/v1/thingTypes", CreateThingTypes(srv))
 	r.PUT("/model-manager/v1/thingTypes/{id}", UpdateThingTypesById(srv))
 	r.GET("/model-manager/v1/thingTypes/{id}", GetThingTypesById(srv))
-	// r.GET("/model-manager/v1/thingTypes", CreateThingTypes(srv))
 	r.DELETE("/model-manager/v1/thingTypes/{id}", DeleteThingTypesById(srv))
 	r.POST("/model-manager/v1/deleteThingTypesBatch", DeleteThingTypes(srv))
 }
