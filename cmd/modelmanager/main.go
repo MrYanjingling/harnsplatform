@@ -61,21 +61,21 @@ func main() {
 	if flagconf != "" {
 		viper.SetConfigFile(flagconf)
 		if err := viper.ReadInConfig(); err != nil {
-			log.Fatalf("failed to read config yaml. err:{%s}", err)
+			log.Fatalf("Failed to read config yaml. err description:%s", err)
 		}
 		if err := viper.Unmarshal(&bc); err != nil {
-			log.Fatalf("failed to unmarshal config yaml. err:{%s}", err)
+			log.Fatalf("Failed to unmarshal config yaml. err description:%s", err)
 		}
 	}
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, log, logger)
 	if err != nil {
-		log.Fatalf("failed to wire app. err:{%s}", err)
+		log.Fatalf("Failed to wire app. err description:%s", err)
 	}
 	defer cleanup()
 
 	// start and wait for stop signal
 	if err := app.Run(); err != nil {
-		log.Fatalf("failed to run app. err:{%s}", err)
+		log.Fatalf("Failed to run app. err description:%s", err)
 	}
 }
