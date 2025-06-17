@@ -30,6 +30,7 @@ type ThingTypesHTTPServer interface {
 	DeleteThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
 	DeleteThingTypes(context.Context, *BatchIds) (*BatchIds, error)
 	GetThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
+	GetThingTypes(context.Context, *biz.ThingTypesQuery) (*biz.PaginationResponse, error)
 }
 
 func RegisterThingTypesHTTPServer(s *http.Server, srv ThingTypesHTTPServer) {
@@ -39,6 +40,7 @@ func RegisterThingTypesHTTPServer(s *http.Server, srv ThingTypesHTTPServer) {
 	r.GET("/model-manager/v1/thingTypes/{id}", GetThingTypesById(srv))
 	r.DELETE("/model-manager/v1/thingTypes/{id}", DeleteThingTypesById(srv))
 	r.POST("/model-manager/v1/deleteThingTypesBatch", DeleteThingTypes(srv))
+	r.GET("/model-manager/v1/thingTypes", GetThingTypes(srv))
 }
 
 func CreateThingTypes(srv ThingTypesHTTPServer) func(ctx http.Context) error {
@@ -157,6 +159,27 @@ func DeleteThingTypes(srv ThingTypesHTTPServer) func(ctx http.Context) error {
 			return err
 		}
 		reply := out.(*BatchIds)
+		return ctx.Result(200, reply)
+	}
+}
+
+func GetThingTypes(srv ThingTypesHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		ttq := biz.ThingTypesQuery{
+			PaginationRequest: &biz.PaginationRequest{},
+		}
+		if err := ctx.BindQuery(&ttq); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetThingTypes(ctx, req.(*biz.ThingTypesQuery))
+		})
+		out, err := h(ctx, &ttq)
+		if err != nil {
+			return err
+		}
+		reply := out.(*biz.PaginationResponse)
 		return ctx.Result(200, reply)
 	}
 }

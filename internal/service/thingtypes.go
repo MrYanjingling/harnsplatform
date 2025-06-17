@@ -142,3 +142,11 @@ func (s *ThingTypesService) DeleteThingTypes(ctx context.Context, req *pb.BatchI
 	}
 	return req, nil
 }
+
+func (s *ThingTypesService) GetThingTypes(ctx context.Context, req *biz.ThingTypesQuery) (*biz.PaginationResponse, error) {
+	pr, err := s.ttu.GetThingTypes(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}

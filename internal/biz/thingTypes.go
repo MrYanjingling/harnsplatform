@@ -43,6 +43,12 @@ type Property struct {
 	Max        string `json:"max,omitempty"`
 }
 
+type ThingTypesQuery struct {
+	Name               string `json:"name,omitempty"`
+	ParentTypeId       string `json:"parentTypeId,omitempty"`
+	*PaginationRequest `json:",inline"`
+}
+
 func (t *ThingTypes) BeforeSave(db *gorm.DB) error {
 	user := auth.GetCurrentUser(db)
 	if user.Name != "" {
@@ -125,6 +131,7 @@ type ThingTypesRepo interface {
 	DeleteByID(context.Context, string) (*ThingTypes, error)
 	DeleteBatch(context.Context, []string) error
 	ListAll(context.Context) ([]*ThingTypes, error)
+	List(ctx context.Context, query *ThingTypesQuery) (*PaginationResponse, error)
 }
 
 type ThingTypesUsecase struct {
@@ -180,4 +187,12 @@ func (ttu *ThingTypesUsecase) DeleteThingTypes(ctx context.Context, ids []string
 		return err
 	}
 	return nil
+}
+
+func (ttu *ThingTypesUsecase) GetThingTypes(ctx context.Context, ttq *ThingTypesQuery) (*PaginationResponse, error) {
+	pr, err := ttu.repo.List(ctx, ttq)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
 }

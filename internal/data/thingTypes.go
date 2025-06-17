@@ -74,3 +74,30 @@ func (s thingTypesRepo) ListAll(ctx context.Context) ([]*biz.ThingTypes, error) 
 	// TODO implement me
 	panic("implement me")
 }
+
+func (s thingTypesRepo) Page(ctx context.Context) ([]*biz.ThingTypes, error) {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (s thingTypesRepo) List(ctx context.Context, ttq *biz.ThingTypesQuery) (*biz.PaginationResponse, error) {
+	var data []*biz.ThingTypes
+	query := s.data.DB.Model(&biz.ThingTypes{})
+
+	if len(ttq.Name) != 0 {
+		query.Where("name LIKE ?", "%"+ttq.Name+"%")
+	}
+
+	if len(ttq.ParentTypeId) != 0 {
+		query.Where("parent_type_id = ?", ttq.ParentTypeId)
+	}
+
+	query, response := ttq.PaginationRequest.List(query, &biz.ThingTypes{})
+
+	if err := query.Find(&data).Error; err != nil {
+		return nil, err
+	}
+	response.Items = data
+
+	return response, nil
+}
