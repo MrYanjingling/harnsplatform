@@ -31,6 +31,7 @@ type Characteristics struct {
 	Length       string `json:"length,omitempty"`
 	DataType     string `json:"dataType,omitempty"`
 	DefaultValue string `json:"defaultValue,omitempty"`
+	Value        string `json:"value,omitempty"`
 }
 
 type Property struct {
