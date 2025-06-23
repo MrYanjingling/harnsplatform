@@ -72,12 +72,15 @@ func (s ThingsRepo) DeleteBatch(ctx context.Context, ids []string) error {
 
 func (s ThingsRepo) ListAll(ctx context.Context) ([]*biz.Things, error) {
 	// TODO implement me
-	panic("implement me")
+	// panic("implement me")
+	return nil,nil
+
 }
 
 func (s ThingsRepo) Page(ctx context.Context) ([]*biz.Things, error) {
 	// TODO implement me
-	panic("implement me")
+	// panic("implement me")
+	return nil, nil
 }
 
 func (s ThingsRepo) List(ctx context.Context, ttq *biz.ThingsQuery) (*biz.PaginationResponse, error) {
@@ -88,8 +91,8 @@ func (s ThingsRepo) List(ctx context.Context, ttq *biz.ThingsQuery) (*biz.Pagina
 		query.Where("name LIKE ?", "%"+ttq.Name+"%")
 	}
 
-	if len(ttq.ParentTypeId) != 0 {
-		query.Where("parent_type_id = ?", ttq.ParentTypeId)
+	if len(ttq.ThingTypeId) != 0 {
+		query.Where("parent_type_id = ?", ttq.ThingTypeId)
 	}
 
 	query, response := ttq.PaginationRequest.List(query, &biz.Things{})

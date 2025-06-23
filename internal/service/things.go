@@ -20,7 +20,7 @@ type ThingsService struct {
 	log *log.Helper
 }
 
-func NewThingsService(ttu *biz.ThingTypesUsecase, tu *biz.ThingsUsecase, logger *log.Helper) *ThingsService {
+func NewThingsService(tu *biz.ThingsUsecase,ttu *biz.ThingTypesUsecase,  logger *log.Helper) *ThingsService {
 	return &ThingsService{
 		ttu: ttu,
 		tu:  tu,
