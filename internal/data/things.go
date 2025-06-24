@@ -73,7 +73,7 @@ func (s ThingsRepo) DeleteBatch(ctx context.Context, ids []string) error {
 func (s ThingsRepo) ListAll(ctx context.Context) ([]*biz.Things, error) {
 	// TODO implement me
 	// panic("implement me")
-	return nil,nil
+	return nil, nil
 
 }
 
