@@ -6,7 +6,7 @@ import (
 
 type Things struct {
 	Name            string                              `json:"name,omitempty"`
-	ThingTypeId     *string                             `json:"parentTypeId,omitempty"`
+	ThingTypeId     *string                             `json:"thingTypeId,omitempty"`
 	Description     string                              `json:"description,omitempty"`
 	Characteristics map[string]*biz.Characteristics     `json:"characteristics,omitempty"`
 	PropertySets    map[string]map[string]*biz.Property `json:"propertySets,omitempty"`

@@ -6,7 +6,6 @@ import (
 	"github.com/oklog/ulid/v2"
 	pb "harnsplatform/api/modelmanager/v1"
 	"harnsplatform/internal/biz"
-	"harnsplatform/internal/common"
 	randutil "harnsplatform/internal/utils"
 	"strconv"
 	"time"
@@ -56,20 +55,7 @@ func (s *ThingsService) CreateThings(ctx context.Context, req *pb.Things) (*biz.
 		if err != nil {
 			return nil, err
 		} else {
-			for key, ps := range thingType.PropertySets {
-				ps := ps.(map[string]*biz.Property)
-				for k, property := range ps {
-					tt.PropertySets[key].(map[string]*biz.Property)[k] = &biz.Property{
-						Name:       property.Name,
-						Unit:       property.Unit,
-						Value:      property.Value,
-						DataType:   property.DataType,
-						AccessMode: property.AccessMode,
-						Min:        property.Min,
-						Max:        property.Max,
-					}
-				}
-			}
+			tt.PropertySets = thingType.PropertySets
 		}
 	} else {
 		tt.Combination = append(tt.Combination, req.Combination...)
@@ -93,7 +79,7 @@ func (s *ThingsService) GetThingsById(ctx context.Context, req *pb.Things) (*biz
 }
 
 func (s *ThingsService) UpdateThingsById(ctx context.Context, req *pb.Things) (*biz.Things, error) {
-	c := context.WithValue(ctx, common.META, req.Meta)
+	// c := context.WithValue(ctx, common.META, req.Meta)
 
 	tt := &biz.Things{
 		Name:            req.Name,
@@ -117,26 +103,13 @@ func (s *ThingsService) UpdateThingsById(ctx context.Context, req *pb.Things) (*
 		if err != nil {
 			return nil, err
 		} else {
-			for key, ps := range thingType.PropertySets {
-				ps := ps.(map[string]*biz.Property)
-				for k, property := range ps {
-					tt.PropertySets[key].(map[string]*biz.Property)[k] = &biz.Property{
-						Name:       property.Name,
-						Unit:       property.Unit,
-						Value:      property.Value,
-						DataType:   property.DataType,
-						AccessMode: property.AccessMode,
-						Min:        property.Min,
-						Max:        property.Max,
-					}
-				}
-			}
+			tt.PropertySets = thingType.PropertySets
 		}
 	} else {
 		tt.Combination = append(tt.Combination, req.Combination...)
 	}
 
-	id, err := s.tu.UpdateThingsById(c, tt)
+	id, err := s.tu.UpdateThingsById(ctx, tt, req.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +117,7 @@ func (s *ThingsService) UpdateThingsById(ctx context.Context, req *pb.Things) (*
 }
 
 func (s *ThingsService) DeleteThingsById(ctx context.Context, req *pb.Things) (*biz.Things, error) {
-	c := context.WithValue(ctx, common.META, req.Meta)
-	id, err := s.tu.DeleteThingsById(c, req.Meta.Id)
+	id, err := s.tu.DeleteThingsById(ctx, req.Meta.Id, req.Version)
 	if err != nil {
 		return nil, err
 	}

@@ -35,12 +35,12 @@ type ThingsHTTPServer interface {
 
 func RegisterThingsHTTPServer(s *http.Server, srv ThingsHTTPServer) {
 	r := s.Route("/")
-	r.POST("/model-manager/v1/Things", CreateThings(srv))
-	r.PUT("/model-manager/v1/Things/{id}", UpdateThingsById(srv))
-	r.GET("/model-manager/v1/Things/{id}", GetThingsById(srv))
-	r.DELETE("/model-manager/v1/Things/{id}", DeleteThingsById(srv))
+	r.POST("/model-manager/v1/things", CreateThings(srv))
+	r.PUT("/model-manager/v1/things/{id}", UpdateThingsById(srv))
+	r.GET("/model-manager/v1/things/{id}", GetThingsById(srv))
+	r.DELETE("/model-manager/v1/things/{id}", DeleteThingsById(srv))
 	r.POST("/model-manager/v1/deleteThingsBatch", DeleteThings(srv))
-	r.GET("/model-manager/v1/Things", GetThings(srv))
+	r.GET("/model-manager/v1/things", GetThings(srv))
 }
 
 func CreateThings(srv ThingsHTTPServer) func(ctx http.Context) error {
@@ -69,7 +69,7 @@ func UpdateThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		version := ctx.Header().Get(common.ETAG)
 		if len(version) == 0 {
-			return errors.GenerateResourcePreconditionRequiredError(common.THING_TYPES)
+			return errors.GenerateResourcePreconditionRequiredError(common.THINGS)
 		}
 
 		var in Things
@@ -124,7 +124,7 @@ func DeleteThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 		}
 		version := ctx.Header().Get(common.ETAG)
 		if len(version) == 0 {
-			return errors.GenerateResourcePreconditionRequiredError(common.THING_TYPES)
+			return errors.GenerateResourcePreconditionRequiredError(common.THINGS)
 		}
 
 		meta.Version = version

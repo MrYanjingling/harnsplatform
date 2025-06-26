@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	"harnsplatform/internal/biz"
+	"harnsplatform/internal/common"
+	"harnsplatform/internal/errors"
 )
 
 type thingTypesRepo struct {
@@ -27,12 +29,16 @@ func (s thingTypesRepo) Save(ctx context.Context, tt *biz.ThingTypes) (*biz.Thin
 	return tt, nil
 }
 
-func (s thingTypesRepo) Update(ctx context.Context, tt *biz.ThingTypes) (*biz.ThingTypes, error) {
-	t := biz.ThingTypes{Meta: biz.Meta{}}
-	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Model(&t).Where("id = ?", tt.Id).Updates(tt)
+func (s thingTypesRepo) Update(ctx context.Context, tt *biz.ThingTypes, oldVersion string) (*biz.ThingTypes, error) {
+	ctx = context.WithValue(ctx, common.VERSION, oldVersion)
+
+	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Model(tt).Where("version = ?", oldVersion).Updates(tt)
 	if result.Error != nil {
 		s.log.Errorf("failed to update thingTypes. err:[%v]", result.Error)
 		return nil, nil
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.GenerateResourceMismatchError(common.THING_TYPES)
 	}
 	id, _ := s.FindByID(ctx, tt.Id)
 	return id, nil
@@ -43,18 +49,21 @@ func (s thingTypesRepo) FindByID(ctx context.Context, id string) (*biz.ThingType
 	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).First(&tt, "id = ? ", id)
 	if result.Error != nil {
 		s.log.Errorf("failed to find thingTypes. err:[%v]", result.Error)
-		return nil, nil
+		return nil, errors.GenerateResourceNotFoundError(common.THING_TYPES)
 	}
 	// context
 	return &tt, nil
 }
 
-func (s thingTypesRepo) DeleteByID(ctx context.Context, id string) (*biz.ThingTypes, error) {
-	tt := biz.ThingTypes{Meta: biz.Meta{}}
-	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Delete(&tt, "id = ?", id)
+func (s thingTypesRepo) DeleteByID(ctx context.Context, id string, version string) (*biz.ThingTypes, error) {
+	tt := biz.ThingTypes{Meta: biz.Meta{Id: id}}
+	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Where("version = ?", version).Delete(&tt)
 	if result.Error != nil {
 		s.log.Errorf("failed to delete thingTypes. err:[%v]", result.Error)
-		return nil, nil
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.GenerateResourceMismatchError(common.THING_TYPES)
 	}
 	return &tt, nil
 }

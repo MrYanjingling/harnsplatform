@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	"harnsplatform/internal/biz"
+	"harnsplatform/internal/common"
+	"harnsplatform/internal/errors"
 )
 
 type ThingsRepo struct {
@@ -27,12 +29,16 @@ func (s ThingsRepo) Save(ctx context.Context, tt *biz.Things) (*biz.Things, erro
 	return tt, nil
 }
 
-func (s ThingsRepo) Update(ctx context.Context, tt *biz.Things) (*biz.Things, error) {
-	t := biz.Things{Meta: biz.Meta{}}
-	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Model(&t).Where("id = ?", tt.Id).Updates(tt)
+func (s ThingsRepo) Update(ctx context.Context, tt *biz.Things, oldVersion string) (*biz.Things, error) {
+	ctx = context.WithValue(ctx, common.VERSION, oldVersion)
+
+	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Model(tt).Where("version = ?", oldVersion).Updates(tt)
 	if result.Error != nil {
 		s.log.Errorf("failed to update Things. err:[%v]", result.Error)
-		return nil, nil
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.GenerateResourceMismatchError(common.THINGS)
 	}
 	id, _ := s.FindByID(ctx, tt.Id)
 	return id, nil
@@ -43,18 +49,21 @@ func (s ThingsRepo) FindByID(ctx context.Context, id string) (*biz.Things, error
 	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).First(&tt, "id = ? ", id)
 	if result.Error != nil {
 		s.log.Errorf("failed to find Things. err:[%v]", result.Error)
-		return nil, nil
+		return nil, errors.GenerateResourceNotFoundError(common.THINGS)
 	}
 	// context
 	return &tt, nil
 }
 
-func (s ThingsRepo) DeleteByID(ctx context.Context, id string) (*biz.Things, error) {
-	tt := biz.Things{Meta: biz.Meta{}}
-	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Delete(&tt, "id = ?", id)
+func (s ThingsRepo) DeleteByID(ctx context.Context, id string, version string) (*biz.Things, error) {
+	tt := biz.Things{Meta: biz.Meta{Id: id}}
+	result := s.data.DB.WithContext(context.WithoutCancel(ctx)).Where("version = ?", version).Delete(&tt)
 	if result.Error != nil {
 		s.log.Errorf("failed to delete Things. err:[%v]", result.Error)
 		return nil, nil
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.GenerateResourceMismatchError(common.THINGS)
 	}
 	return &tt, nil
 }
@@ -92,7 +101,7 @@ func (s ThingsRepo) List(ctx context.Context, ttq *biz.ThingsQuery) (*biz.Pagina
 	}
 
 	if len(ttq.ThingTypeId) != 0 {
-		query.Where("parent_type_id = ?", ttq.ThingTypeId)
+		query.Where("thing_type_id = ?", ttq.ThingTypeId)
 	}
 
 	query, response := ttq.PaginationRequest.List(query, &biz.Things{})

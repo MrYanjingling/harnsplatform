@@ -6,7 +6,6 @@ import (
 	"github.com/oklog/ulid/v2"
 	pb "harnsplatform/api/modelmanager/v1"
 	"harnsplatform/internal/biz"
-	"harnsplatform/internal/common"
 	randutil "harnsplatform/internal/utils"
 	"strconv"
 	"time"
@@ -83,8 +82,6 @@ func (s *ThingTypesService) GetThingTypesById(ctx context.Context, req *pb.Thing
 }
 
 func (s *ThingTypesService) UpdateThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
-	c := context.WithValue(ctx, common.META, req.Meta)
-
 	tt := &biz.ThingTypes{
 		Name:            req.Name,
 		ParentTypeId:    req.ParentTypeId,
@@ -119,7 +116,7 @@ func (s *ThingTypesService) UpdateThingTypesById(ctx context.Context, req *pb.Th
 		}
 	}
 
-	id, err := s.ttu.UpdateThingTypesById(c, tt)
+	id, err := s.ttu.UpdateThingTypesById(ctx, tt, req.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +124,7 @@ func (s *ThingTypesService) UpdateThingTypesById(ctx context.Context, req *pb.Th
 }
 
 func (s *ThingTypesService) DeleteThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
-	c := context.WithValue(ctx, common.META, req.Meta)
-	id, err := s.ttu.DeleteThingTypesById(c, req.Meta.Id)
+	id, err := s.ttu.DeleteThingTypesById(ctx, req.Meta.Id, req.Version)
 	if err != nil {
 		return nil, err
 	}
