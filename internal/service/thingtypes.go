@@ -72,8 +72,8 @@ func (s *ThingTypesService) CreateThingTypes(ctx context.Context, req *pb.ThingT
 	return thingTypes, nil
 }
 
-func (s *ThingTypesService) GetThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
-	id, err := s.ttu.GetThingTypesById(ctx, req.Meta.Id)
+func (s *ThingTypesService) GetThingTypesById(ctx context.Context, req *biz.Meta) (*biz.ThingTypes, error) {
+	id, err := s.ttu.GetThingTypesById(ctx, req.GetTenant())
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +123,8 @@ func (s *ThingTypesService) UpdateThingTypesById(ctx context.Context, req *pb.Th
 	return id, nil
 }
 
-func (s *ThingTypesService) DeleteThingTypesById(ctx context.Context, req *pb.ThingTypes) (*biz.ThingTypes, error) {
-	id, err := s.ttu.DeleteThingTypesById(ctx, req.Meta.Id, req.Version)
+func (s *ThingTypesService) DeleteThingTypesById(ctx context.Context, req *biz.Meta) (*biz.ThingTypes, error) {
+	id, err := s.ttu.DeleteThingTypesById(ctx, req.GetId(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}

@@ -50,7 +50,7 @@ func NewData(c *conf.Data, log *log.Helper) (*Data, func(), error) {
 	sqlDB.SetMaxOpenConns(100)                 // 最大打开连接数
 	sqlDB.SetConnMaxLifetime(30 * time.Minute) // 连接最大存活时间
 
-	if err := data.DB.AutoMigrate(&biz.ThingTypes{}, &biz.Things{}); err != nil {
+	if err := data.DB.AutoMigrate(&biz.ThingTypes{}, &biz.Things{}, &biz.Agents{}, &biz.Mapping{}); err != nil {
 		log.Fatalf("failed to migrate thingTypes model: %v", err)
 	}
 

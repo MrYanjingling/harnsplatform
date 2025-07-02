@@ -27,9 +27,9 @@ const OperationThingTypesCreateThingTypes = "/api.modelmanager.v1.ThingTypes/Cre
 type ThingTypesHTTPServer interface {
 	CreateThingTypes(context.Context, *ThingTypes) (*biz.ThingTypes, error)
 	UpdateThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
-	DeleteThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
+	DeleteThingTypesById(context.Context, *biz.Meta) (*biz.ThingTypes, error)
 	DeleteThingTypes(context.Context, *BatchIds) (*BatchIds, error)
-	GetThingTypesById(context.Context, *ThingTypes) (*biz.ThingTypes, error)
+	GetThingTypesById(context.Context, *biz.Meta) (*biz.ThingTypes, error)
 	GetThingTypes(context.Context, *biz.ThingTypesQuery) (*biz.PaginationResponse, error)
 }
 
@@ -96,16 +96,14 @@ func UpdateThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error
 
 func GetThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var meta biz.Meta
-		if err := ctx.BindVars(&meta); err != nil {
+		var in biz.Meta
+		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
-		in := ThingTypes{
-			Meta: &meta,
-		}
+
 		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetThingTypesById(ctx, req.(*ThingTypes))
+			return srv.GetThingTypesById(ctx, req.(*biz.Meta))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
@@ -118,8 +116,8 @@ func GetThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error {
 
 func DeleteThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var meta biz.Meta
-		if err := ctx.BindVars(&meta); err != nil {
+		var in biz.Meta
+		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
 		version := ctx.Header().Get(common.ETAG)
@@ -127,13 +125,11 @@ func DeleteThingTypesById(srv ThingTypesHTTPServer) func(ctx http.Context) error
 			return errors.GenerateResourcePreconditionRequiredError(common.THING_TYPES)
 		}
 
-		meta.Version = version
-		in := ThingTypes{
-			Meta: &meta,
-		}
+		in.SetVersion(version)
+
 		http.SetOperation(ctx, OperationThingTypesCreateThingTypes)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.DeleteThingTypesById(ctx, req.(*ThingTypes))
+			return srv.DeleteThingTypesById(ctx, req.(*biz.Meta))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {

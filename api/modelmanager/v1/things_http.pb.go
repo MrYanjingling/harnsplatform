@@ -27,9 +27,9 @@ const OperationThingsCreateThings = "/api.modelmanager.v1.Things/CreateThings"
 type ThingsHTTPServer interface {
 	CreateThings(context.Context, *Things) (*biz.Things, error)
 	UpdateThingsById(context.Context, *Things) (*biz.Things, error)
-	DeleteThingsById(context.Context, *Things) (*biz.Things, error)
+	DeleteThingsById(context.Context, *biz.Meta) (*biz.Things, error)
 	DeleteThings(context.Context, *BatchIds) (*BatchIds, error)
-	GetThingsById(context.Context, *Things) (*biz.Things, error)
+	GetThingsById(context.Context, *biz.Meta) (*biz.Things, error)
 	GetThings(context.Context, *biz.ThingsQuery) (*biz.PaginationResponse, error)
 }
 
@@ -96,16 +96,14 @@ func UpdateThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 
 func GetThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var meta biz.Meta
-		if err := ctx.BindVars(&meta); err != nil {
+		var in biz.Meta
+		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
-		in := Things{
-			Meta: &meta,
-		}
+
 		http.SetOperation(ctx, OperationThingsCreateThings)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetThingsById(ctx, req.(*Things))
+			return srv.GetThingsById(ctx, req.(*biz.Meta))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {
@@ -118,8 +116,8 @@ func GetThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 
 func DeleteThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var meta biz.Meta
-		if err := ctx.BindVars(&meta); err != nil {
+		var in biz.Meta
+		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
 		version := ctx.Header().Get(common.ETAG)
@@ -127,13 +125,11 @@ func DeleteThingsById(srv ThingsHTTPServer) func(ctx http.Context) error {
 			return errors.GenerateResourcePreconditionRequiredError(common.THINGS)
 		}
 
-		meta.Version = version
-		in := Things{
-			Meta: &meta,
-		}
+		in.SetVersion(version)
+
 		http.SetOperation(ctx, OperationThingsCreateThings)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.DeleteThingsById(ctx, req.(*Things))
+			return srv.DeleteThingsById(ctx, req.(*biz.Meta))
 		})
 		out, err := h(ctx, &in)
 		if err != nil {

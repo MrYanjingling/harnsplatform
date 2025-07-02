@@ -8,7 +8,7 @@ import (
 
 type Meta struct {
 	Id            string    `json:"id" gorm:"column:id;primaryKey"`
-	Tenant        string    `json:"tenant" gorm:"column:tenant;varchar(32);not null;default:main"`
+	Tenant        string    `json:"tenant" gorm:"column:tenant;varchar(32);not null;default:main;index:base_index,priority:1"`
 	Version       string    `json:"version" gorm:"column:version;type:varchar(32);not null"`
 	CreatedTime   time.Time `json:"createdTime" gorm:"column:created_time;autoCreateTime"`
 	UpdatedTime   time.Time `json:"updatedTime" gorm:"column:updated_time;autoUpdateTime"`
@@ -26,9 +26,29 @@ func (m *Meta) SetVersion(version string) {
 	m.Version = version
 }
 
-type OptimisticLock interface {
+func (m *Meta) GetId() string {
+	return m.Id
+}
+
+func (m *Meta) SetId(id string) {
+	m.Id = id
+}
+
+func (m *Meta) GetTenant() string {
+	return m.Tenant
+}
+
+func (m *Meta) SetTenant(tenant string) {
+	m.Tenant = tenant
+}
+
+type ObjectMeta interface {
 	GetVersion() string
 	SetVersion(version string)
+	GetId() string
+	SetId(id string)
+	GetTenant() string
+	SetTenant(tenant string)
 }
 
 type PaginationRequest struct {

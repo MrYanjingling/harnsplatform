@@ -12,6 +12,7 @@ const (
 	ErrorReason_USER_NOT_FOUND      ErrorReason = 1
 	ErrorReason_RESOURCE_MISMATCH   ErrorReason = 2
 	ErrorReason_RESOURCE_NOT_FOUND  ErrorReason = 4
+	ErrorReason_AGENTS_UNSUPPORTED  ErrorReason = 5
 )
 
 // Enum value maps for ErrorReason.
@@ -22,6 +23,7 @@ var (
 		2: "RESOURCE_MISMATCH",
 		3: "RESOURCE_PRECONDITION_REQUIRED",
 		4: "RESOURCE_NOT_FOUND",
+		5: "AGENTS_UNSUPPORTED",
 	}
 	ErrorReasonValue = map[string]int32{
 		"GREETER_UNSPECIFIED":            0,
@@ -29,6 +31,7 @@ var (
 		"RESOURCE_MISMATCH":              2,
 		"RESOURCE_PRECONDITION_REQUIRED": 3,
 		"RESOURCE_NOT_FOUND":             4,
+		"AGENTS_UNSUPPORTED":             5,
 	}
 )
 
@@ -52,4 +55,8 @@ func GenerateResourcePreconditionRequiredError(resourceName string) error {
 
 func GenerateResourceNotFoundError(resourceName string) error {
 	return errors.New(404, ErrorReason_RESOURCE_NOT_FOUND.String(), fmt.Sprintf("%s resource not found.", resourceName))
+}
+
+func GenerateAgentsUnsupportedError(agentType string) error {
+	return errors.New(400, ErrorReason_AGENTS_UNSUPPORTED.String(), fmt.Sprintf("unsupported agent type %s.", agentType))
 }

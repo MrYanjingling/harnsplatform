@@ -69,8 +69,8 @@ func (s *ThingsService) CreateThings(ctx context.Context, req *pb.Things) (*biz.
 	return Things, nil
 }
 
-func (s *ThingsService) GetThingsById(ctx context.Context, req *pb.Things) (*biz.Things, error) {
-	id, err := s.tu.GetThingsById(ctx, req.Meta.Id)
+func (s *ThingsService) GetThingsById(ctx context.Context, req *biz.Meta) (*biz.Things, error) {
+	id, err := s.tu.GetThingsById(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -116,8 +116,8 @@ func (s *ThingsService) UpdateThingsById(ctx context.Context, req *pb.Things) (*
 	return id, nil
 }
 
-func (s *ThingsService) DeleteThingsById(ctx context.Context, req *pb.Things) (*biz.Things, error) {
-	id, err := s.tu.DeleteThingsById(ctx, req.Meta.Id, req.Version)
+func (s *ThingsService) DeleteThingsById(ctx context.Context, req *biz.Meta) (*biz.Things, error) {
+	id, err := s.tu.DeleteThingsById(ctx, req.GetId(), req.GetVersion())
 	if err != nil {
 		return nil, err
 	}

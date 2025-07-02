@@ -5,6 +5,7 @@ go 1.23.0
 require (
 	github.com/go-kratos/kratos/v2 v2.8.4
 	github.com/google/wire v0.6.0
+	github.com/imdario/mergo v0.3.16
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/spf13/viper v1.20.1

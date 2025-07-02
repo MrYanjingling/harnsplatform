@@ -38,7 +38,11 @@ func wireApp(confServer *conf.Server, confData *conf.Data, log *log.Helper, logg
 	thingsUsecase := biz.NewThingsUsecase(thingsRepo, log)
 	thingsService := service.NewThingsService(thingsUsecase, thingTypesUsecase, log)
 
-	httpServer := server.NewHTTPServer(confServer, thingTypesService, thingsService, log)
+	agentsRepo := data.NewAgentsRepo(dataData, log)
+	agentsUsecase := biz.NewAgentsUsecase(agentsRepo, log)
+	agentService := service.NewAgentsService(agentsUsecase, log)
+
+	httpServer := server.NewHTTPServer(confServer, thingTypesService, thingsService, agentService, log)
 	app := newApp(logger, httpServer)
 	return app, func() {
 		cleanup()
