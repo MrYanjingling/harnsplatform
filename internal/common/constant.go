@@ -3,6 +3,7 @@ package common
 const META = "meta"
 const THING_TYPES = "thingTypes"
 const THINGS = "things"
+const BROKERS = "brokers"
 const USER = "user"
 const AGENTS = "agents"
 const MAPPINGS = "mappings"

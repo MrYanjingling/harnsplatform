@@ -5,11 +5,11 @@ import (
 )
 
 type Brokers struct {
-	Name            string                              `json:"name,omitempty"`
-	ThingTypeId     *string                             `json:"parentTypeId,omitempty"`
-	Description     string                              `json:"description,omitempty"`
-	Characteristics map[string]*biz.Characteristics     `json:"characteristics,omitempty"`
-	PropertySets    map[string]map[string]*biz.Property `json:"propertySets,omitempty"`
-	Combination     []string                            `json:"combination,omitempty"`
-	*biz.Meta       `json:",inline"`
+	Name                  string                     `json:"name"`
+	Description           string                     `json:"description"`
+	DeployDetails         *biz.DeployDetails         `json:"deployDetails"`         // 部署相关信息 IP node
+	RuntimeType           string                     `json:"runtimeType"`           // single单一架构  redundancy冗余架构
+	TimeSeriesStorePeriod *biz.TimeSeriesStorePeriod `json:"TimeSeriesStorePeriod"` // 时序数据存储周期
+	Sink                  *biz.Sink                  `json:"sink"`                  // 配置了ThingId相关参数才能sink
+	*biz.Meta             `gorm:"embedded"`
 }
