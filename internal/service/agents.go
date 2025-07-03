@@ -93,3 +93,41 @@ func (s *AgentsService) GetAgents(ctx context.Context, req *biz.AgentsQuery) (*b
 	}
 	return pr, nil
 }
+
+func (s *AgentsService) CreateAgentsMappings(ctx context.Context, req []*biz.Mapping) ([]*biz.Mapping, error) {
+	// manager := collector.AgentsManagers[req.GetAgentType()]
+	for _, mapping := range req {
+		mapping.Id = ulid.MustNewDefault(time.Now()).String()
+		mapping.Version = strconv.FormatUint(randutil.Uint64n(), 10)
+	}
+
+	pr, err := s.au.CreateAgentsMappings(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}
+
+func (s *AgentsService) DeleteAgentsMappingsById(ctx context.Context, req *biz.Meta) (*biz.Mapping, error) {
+	id, err := s.au.DeleteAgentsMappingsById(ctx, req.GetId(), req.GetVersion())
+	if err != nil {
+		return nil, err
+	}
+	return id, nil
+}
+
+func (s *AgentsService) DeleteAgentsMappings(ctx context.Context, req *pb.BatchIds) (*pb.BatchIds, error) {
+	err := s.au.DeleteAgentsMappings(ctx, req.Ids)
+	if err != nil {
+		return req, err
+	}
+	return req, nil
+}
+
+func (s *AgentsService) GetMappingsByAgentsId(ctx context.Context, req *biz.MappingsQuery) (*biz.PaginationResponse, error) {
+	pr, err := s.au.GetMappingsByAgentsId(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}

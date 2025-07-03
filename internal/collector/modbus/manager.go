@@ -12,6 +12,10 @@ import (
 type AgentsManager struct {
 }
 
+func (m *AgentsManager) ValidateMappings(ctx context.Context, mappings []*biz.Mapping) error {
+	return nil
+}
+
 func (m *AgentsManager) CreateAgents(ctx context.Context, agents pb.Agents) (*biz.Agents, error) {
 	modbusAgents, ok := agents.(*pb.ModbusAgent)
 	if !ok {

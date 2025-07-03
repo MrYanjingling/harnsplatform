@@ -24,15 +24,16 @@ type Agents struct {
 }
 
 type Mapping struct {
-	AgentId      string            `gorm:"column:agent_id;type:varchar(32);index:idx_agent_id" json:"agentId"`
-	DataType     common.DataType   `gorm:"column:data_type;type:varchar(32)" json:"dataType"`                     // bool、int16、float32、float64、int32、int64、uint16
-	Name         string            `gorm:"column:name;type:varchar(32)"  json:"name"`                             // 变量名称
-	Variable     string            `gorm:"column:variable;type:varchar(32)"  json:"variable"`                     // 变量地址 4655536 functionCode = 4
-	Rate         string            `gorm:"column:rate;type:varchar(32)"  json:"rate"`                             // 比率
-	Offset       string            `gorm:"column:offset;type:varchar(32)"  json:"offset"`                         // 数量
-	DefaultValue string            `gorm:"column:default_value;type:varchar(256)"  json:"defaultValue,omitempty"` // 默认值
-	Value        interface{}       `gorm:"-" json:"value,omitempty"`                                              // 值
-	AccessMode   common.AccessMode `gorm:"column:access_mode;type:varchar(2)"  json:"accessMode"`                 // 读写属性
+	Meta         `gorm:"embedded"`
+	AgentId      string      `gorm:"column:agent_id;type:varchar(32);index:idx_agent_id" json:"agentId"`
+	DataType     string      `gorm:"column:data_type;type:varchar(32)" json:"dataType"`                     // bool、int16、float32、float64、int32、int64、uint16
+	Name         string      `gorm:"column:name;type:varchar(32)"  json:"name"`                             // 变量名称
+	Variable     string      `gorm:"column:variable;type:varchar(32)"  json:"variable"`                     // 变量地址 4655536 functionCode = 4
+	Rate         string      `gorm:"column:rate;type:varchar(32)"  json:"rate"`                             // 比率
+	Offset       string      `gorm:"column:offset;type:varchar(32)"  json:"offset"`                         // 数量
+	DefaultValue string      `gorm:"column:default_value;type:varchar(256)"  json:"defaultValue,omitempty"` // 默认值
+	Value        interface{} `gorm:"-" json:"value,omitempty"`                                              // 值
+	AccessMode   string      `gorm:"column:access_mode;type:varchar(2)"  json:"accessMode"`                 // 读写属性
 	Target       `gorm:"embedded"`
 }
 
@@ -48,6 +49,11 @@ type Target struct {
 type AgentsQuery struct {
 	Name               string `json:"name,omitempty"`
 	AgentType          string `json:"agentType,omitempty"`
+	*PaginationRequest `json:",inline"`
+}
+
+type MappingsQuery struct {
+	AgentId            string `json:"agentId,omitempty"`
 	*PaginationRequest `json:",inline"`
 }
 
@@ -118,6 +124,10 @@ type AgentsRepo interface {
 	DeleteBatch(context.Context, []string) error
 	ListAll(context.Context) ([]*Agents, error)
 	List(ctx context.Context, query *AgentsQuery) (*PaginationResponse, error)
+	SaveMappings(ctx context.Context, mappings []*Mapping) ([]*Mapping, error)
+	DeleteMappingByID(context.Context, string, string) (*Mapping, error)
+	DeleteMappings(context.Context, []string) error
+	ListMappings(ctx context.Context, query *MappingsQuery) (*PaginationResponse, error)
 }
 
 type AgentsUsecase struct {
@@ -143,7 +153,7 @@ func (ttu *AgentsUsecase) DeleteAgentsById(ctx context.Context, id string, versi
 		// 404
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, common.THINGS, byID)
+	ctx = context.WithValue(ctx, common.AGENTS, byID)
 	_, err = ttu.repo.DeleteByID(ctx, id, version)
 	if err != nil {
 		// 428
@@ -178,6 +188,38 @@ func (ttu *AgentsUsecase) DeleteAgents(ctx context.Context, ids []string) error 
 
 func (ttu *AgentsUsecase) GetAgents(ctx context.Context, ttq *AgentsQuery) (*PaginationResponse, error) {
 	pr, err := ttu.repo.List(ctx, ttq)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}
+
+func (ttu *AgentsUsecase) CreateAgentsMappings(ctx context.Context, req []*Mapping) ([]*Mapping, error) {
+	mappings, err := ttu.repo.SaveMappings(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return mappings, nil
+}
+
+func (ttu *AgentsUsecase) DeleteAgentsMappingsById(ctx context.Context, id string, version string) (*Mapping, error) {
+	mappings, err := ttu.repo.DeleteMappingByID(ctx, id, version)
+	if err != nil {
+		return nil, err
+	}
+	return mappings, nil
+}
+
+func (ttu *AgentsUsecase) DeleteAgentsMappings(ctx context.Context, ids []string) error {
+	err := ttu.repo.DeleteMappings(ctx, ids)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ttu *AgentsUsecase) GetMappingsByAgentsId(ctx context.Context, ttq *MappingsQuery) (*PaginationResponse, error) {
+	pr, err := ttu.repo.ListMappings(ctx, ttq)
 	if err != nil {
 		return nil, err
 	}

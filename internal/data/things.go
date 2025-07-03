@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"harnsplatform/internal/auth"
 	"harnsplatform/internal/biz"
 	"harnsplatform/internal/common"
 	"harnsplatform/internal/errors"
@@ -95,6 +96,9 @@ func (s ThingsRepo) Page(ctx context.Context) ([]*biz.Things, error) {
 func (s ThingsRepo) List(ctx context.Context, ttq *biz.ThingsQuery) (*biz.PaginationResponse, error) {
 	var data []*biz.Things
 	query := s.data.DB.Model(&biz.Things{})
+
+	user, _ := ctx.Value(common.USER).(*auth.User)
+	query.Where("tenant = ?", user.Tenant)
 
 	if len(ttq.Name) != 0 {
 		query.Where("name LIKE ?", "%"+ttq.Name+"%")

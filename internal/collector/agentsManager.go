@@ -14,6 +14,7 @@ var AgentsManagers = map[common.AgentType]AgentsManager{
 
 type AgentsManager interface {
 	CreateAgents(ctx context.Context, agents pb.Agents) (*biz.Agents, error)
+	ValidateMappings(ctx context.Context, mappings []*biz.Mapping) error
 	// DeleteDevice(device runtime.Device) (runtime.Device, error)
 	// UpdateValidation(deviceType v1.DeviceType, device runtime.Device) error
 	// UpdateDevice(id string, agents pb.Agents, device runtime.Device) (runtime.Device, error)

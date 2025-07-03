@@ -1,6 +1,9 @@
 package auth
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"harnsplatform/internal/common"
+)
 
 type User struct {
 	Id     string
@@ -10,7 +13,7 @@ type User struct {
 
 func GetCurrentUser(db *gorm.DB) *User {
 	ctx := db.Statement.Context
-	if user, flag := ctx.Value("user").(*User); flag {
+	if user, flag := ctx.Value(common.USER).(*User); flag {
 		return user
 	}
 
