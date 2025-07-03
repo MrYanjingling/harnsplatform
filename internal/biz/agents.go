@@ -116,6 +116,46 @@ func (t *Agents) BeforeDelete(db *gorm.DB) error {
 	return nil
 }
 
+func (t *Mapping) BeforeSave(db *gorm.DB) error {
+	user := auth.GetCurrentUser(db)
+	if user.Name != "" {
+		t.Meta.CreatedByName = user.Name
+		t.Meta.UpdatedByName = user.Name
+		t.Meta.CreatedById = user.Id
+		t.Meta.UpdatedById = user.Id
+		t.Meta.Tenant = user.Tenant
+	}
+	return nil
+}
+
+func (t *Mapping) BeforeUpdate(db *gorm.DB) error {
+	user := auth.GetCurrentUser(db)
+	if user.Name != "" {
+		t.Meta.UpdatedByName = user.Name
+		t.Meta.UpdatedById = user.Id
+	}
+	return nil
+}
+
+func (t *Mapping) AfterUpdate(db *gorm.DB) error {
+	if db.Statement.RowsAffected != 0 {
+		ver := db.Statement.Context.Value(common.VERSION)
+		if v, ok := ver.(string); ok {
+			ov, _ := strconv.ParseUint(v, 10, 64)
+			version := strconv.FormatUint(ov+uint64(rand.Intn(100)), 10)
+			err := db.Model(t).UpdateColumn(common.VERSION, version).Error
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (t *Mapping) BeforeDelete(db *gorm.DB) error {
+	return nil
+}
+
 type AgentsRepo interface {
 	Save(context.Context, *Agents) (*Agents, error)
 	Update(context.Context, *Agents, string) (*Agents, error)

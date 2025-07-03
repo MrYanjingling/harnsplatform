@@ -162,7 +162,7 @@ func (s AgentsRepo) ListMappings(ctx context.Context, mq *biz.MappingsQuery) (*b
 		query.Where("agent_id = ?", mq.AgentId)
 	}
 
-	query, response := mq.PaginationRequest.List(query, &biz.Agents{})
+	query, response := mq.PaginationRequest.List(query, &biz.Mapping{})
 
 	if err := query.Find(&data).Error; err != nil {
 		return nil, err

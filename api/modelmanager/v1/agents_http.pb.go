@@ -46,6 +46,9 @@ func RegisterAgentsHTTPServer(s *http.Server, srv AgentsHTTPServer) {
 	r.POST("/model-manager/v1/deleteAgentsBatch", DeleteAgents(srv))
 	r.GET("/model-manager/v1/agents", GetAgents(srv))
 	r.POST("/model-manager/v1/agents/{id}/mappings", CreateAgentsMappings(srv))
+	r.GET("/model-manager/v1/agents/{id}/mappings", GetMappingsByAgentsId(srv))
+	r.DELETE("/model-manager/v1/agents/mappings/{id}", DeleteAgentsMappingsById(srv))
+	r.POST("/model-manager/v1/deleteMappingsBatch", DeleteAgentsMappings(srv))
 }
 
 func CreateAgents(srv AgentsHTTPServer) func(ctx http.Context) error {
@@ -243,33 +246,26 @@ func DeleteAgentsMappingsById(srv AgentsHTTPServer) func(ctx http.Context) error
 		if err != nil {
 			return err
 		}
-		reply := out.(*biz.Agents)
+		reply := out.(*biz.Mapping)
 		return ctx.Result(200, reply)
 	}
 }
 
 func DeleteAgentsMappings(srv AgentsHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
-		var in biz.Meta
-		if err := ctx.BindVars(&in); err != nil {
+		var bis BatchIds
+		if err := ctx.Bind(&bis); err != nil {
 			return err
 		}
-		version := ctx.Header().Get(common.ETAG)
-		if len(version) == 0 {
-			return errors.GenerateResourcePreconditionRequiredError(common.AGENTS)
-		}
-
-		in.SetVersion(version)
-
 		http.SetOperation(ctx, OperationAgentsCreateAgents)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.DeleteAgentsById(ctx, req.(*biz.Meta))
+			return srv.DeleteAgentsMappings(ctx, req.(*BatchIds))
 		})
-		out, err := h(ctx, &in)
+		out, err := h(ctx, &bis)
 		if err != nil {
 			return err
 		}
-		reply := out.(*biz.Agents)
+		reply := out.(*BatchIds)
 		return ctx.Result(200, reply)
 	}
 }
@@ -284,7 +280,7 @@ func GetMappingsByAgentsId(srv AgentsHTTPServer) func(ctx http.Context) error {
 		}
 		http.SetOperation(ctx, OperationAgentsCreateAgents)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetAgents(ctx, req.(*biz.AgentsQuery))
+			return srv.GetMappingsByAgentsId(ctx, req.(*biz.MappingsQuery))
 		})
 		out, err := h(ctx, &ttq)
 		if err != nil {
