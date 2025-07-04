@@ -1,4 +1,4 @@
-package server
+package model_manager
 
 import (
 	"context"

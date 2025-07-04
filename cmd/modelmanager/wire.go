@@ -12,7 +12,7 @@ import (
 	"harnsplatform/internal/biz"
 	"harnsplatform/internal/conf"
 	"harnsplatform/internal/data"
-	"harnsplatform/internal/server"
+	"harnsplatform/internal/server/modelmanager"
 	"harnsplatform/internal/service"
 )
 
@@ -42,7 +42,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, log *log.Helper, logg
 	agentsUsecase := biz.NewAgentsUsecase(agentsRepo, log)
 	agentService := service.NewAgentsService(agentsUsecase, log)
 
-	httpServer := server.NewHTTPServer(confServer, thingTypesService, thingsService, agentService, log)
+	httpServer := modelmanager.NewHTTPServer(confServer, thingTypesService, thingsService, agentService, log)
 	app := newApp(logger, httpServer)
 	return app, func() {
 		cleanup()

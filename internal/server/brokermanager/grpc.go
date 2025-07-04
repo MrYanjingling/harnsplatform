@@ -1,4 +1,4 @@
-package server
+package model_manager
 
 // NewGRPCServer new a gRPC server.
 // func NewGRPCServer(c *conf.Server, thingTypes *service.ThingTypesService, logger log.Logger) *grpc.Server {
