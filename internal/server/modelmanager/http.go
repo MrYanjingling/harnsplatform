@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/selector"
+	v1 "harnsplatform/api/modelmanager/v1"
 	"harnsplatform/internal/auth"
 	"harnsplatform/internal/conf"
 	"harnsplatform/internal/service"
@@ -36,9 +37,9 @@ func NewHTTPServer(c *conf.Server, thingTypes *service.ThingTypesService, things
 
 	// auth
 
-	// v1.RegisterThingTypesHTTPServer(srv, thingTypes)
-	// v1.RegisterThingsHTTPServer(srv, things)
-	// v1.RegisterAgentsHTTPServer(srv, agents)
+	v1.RegisterThingTypesHTTPServer(srv, thingTypes)
+	v1.RegisterThingsHTTPServer(srv, things)
+	v1.RegisterAgentsHTTPServer(srv, agents)
 	return srv
 }
 
