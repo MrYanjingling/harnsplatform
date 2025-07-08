@@ -292,7 +292,8 @@ func GetMappingsByAgentsId(srv AgentsHTTPServer) func(ctx http.Context) error {
 }
 
 type AgentsHTTPClient interface {
-	CreateAgents(ctx context.Context, req *Agents, opts ...http.CallOption) (rsp *biz.Agents, err error)
+	// CreateAgents(ctx context.Context, req *biz.Agents, opts ...http.CallOption) (rsp *biz.Agents, err error)
+	GetAgentsByBrokerId(ctx context.Context, req *biz.AgentsQuery, opts ...http.CallOption) ([]*biz.Agents, error)
 }
 
 type AgentsHTTPClientImpl struct {
@@ -314,4 +315,17 @@ func (c *AgentsHTTPClientImpl) CreateAgents(ctx context.Context, in *Agents, opt
 		return nil, err
 	}
 	return &out, nil
+}
+
+func (c *AgentsHTTPClientImpl) GetAgentsByBrokerId(ctx context.Context, in *biz.AgentsQuery, opts ...http.CallOption) ([]*biz.Agents, error) {
+	var out []*biz.Agents
+	pattern := "/model-manager/v1/agents"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAgentsCreateAgents))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }

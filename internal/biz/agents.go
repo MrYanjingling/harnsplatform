@@ -49,6 +49,7 @@ type Target struct {
 type AgentsQuery struct {
 	Name               string `json:"name,omitempty"`
 	AgentType          string `json:"agentType,omitempty"`
+	Broker             string `json:"broker,omitempty"`
 	*PaginationRequest `json:",inline"`
 }
 
@@ -58,6 +59,7 @@ type MappingsQuery struct {
 }
 
 type ModbusAgentDetails struct {
+	Protocol        string `json:"protocol" binding:"required,oneof=modbusTcp modbusRtu modbusRtuOverTcp"`
 	Slave           uint   `json:"slave" binding:"required"`                                  // 下位机号
 	MemoryLayout    string `json:"memoryLayout" binding:"required,oneof=ABCD BADC CDAB DCBA"` // 内存布局 DCBA CDAB BADC ABCD
 	PositionAddress uint   `json:"positionAddress,omitempty"`                                 // 起始地址
